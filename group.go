@@ -20,3 +20,11 @@ type GMov struct {
 	ScheledFor    time.Time
 	ActualDate    time.Time
 }
+
+func (g Group) TypeName() string {
+	return "Group"
+}
+
+func (gm GMov) TypeName() string {
+	return "GroupMovement"
+}

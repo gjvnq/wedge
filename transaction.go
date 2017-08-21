@@ -23,13 +23,14 @@ func (p TimePeriod) IsOneDay() bool {
 }
 
 type Transaction struct {
-	Id        string
-	Name      string
-	Desc      string
-	Tags      map[string]bool
-	Parts     []TransactionPart
-	Itens     []TransactionItem
-	Movements []GMov
+	Id          string
+	Name        string
+	Desc        string
+	Tags        map[string]bool
+	RefTimeSpan TimePeriod
+	Parts       []TransactionPart
+	Itens       []TransactionItem
+	Movements   []GMov
 }
 
 type TransactionPart struct {
@@ -46,4 +47,16 @@ type TransactionItem struct {
 	Cost    int
 	CostCur string
 	Tags    map[string]bool
+}
+
+func (t Transaction) TypeName() string {
+	return "Transaction"
+}
+
+func (tp TransactionPart) TypeName() string {
+	return "TransactionPart"
+}
+
+func (ti TransactionItem) TypeName() string {
+	return "TransactionItem"
 }

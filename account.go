@@ -8,3 +8,7 @@ type Account struct {
 	Currency string
 	Tags     map[string]bool
 }
+
+func (a Account) TypeName() string {
+	return "Account"
+}

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/chzyer/readline"
-	"log"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"os/user"
-	"database/sql"
 	"path/filepath"
 )
 

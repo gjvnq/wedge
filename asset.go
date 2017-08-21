@@ -19,3 +19,11 @@ type AssetValue struct {
 	Date     time.Time
 	Notes    string
 }
+
+func (a Asset) TypeName() string {
+	return "Asset"
+}
+
+func (av AssetValue) TypeName() string {
+	return "AssetValue"
+}
