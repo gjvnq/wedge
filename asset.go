@@ -4,23 +4,24 @@ import (
 	"time"
 )
 
-type Asset struct {
-	Id   string
-	Name string
-	Desc string
-	Tags map[string]bool
+type AssetKind struct {
+	Id            string
+	Name          string
+	Desc          string
+	DecimalPlaces int
+	Tags          map[string]bool
 }
 
 type AssetValue struct {
 	Id       string
 	AssetId  string
-	Value    int
-	ValueCur string
+	RefId    string
+	Value    int // Value of AssetId in terms of RefId
 	Date     time.Time
 	Notes    string
 }
 
-func (a Asset) TypeName() string {
+func (a AssetKind) TypeName() string {
 	return "Asset"
 }
 

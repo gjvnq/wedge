@@ -30,23 +30,29 @@ type Transaction struct {
 	RefTimeSpan TimePeriod
 	Parts       []TransactionPart
 	Itens       []TransactionItem
-	Movements   []GMov
 }
 
 type TransactionPart struct {
-	Account    string
-	Value      int
-	Status     string
-	ScheledFor time.Time
-	ActualDate time.Time
-	Tags       map[string]bool
+	Id            string
+	TransactionId string
+	AccountId     string
+	Status        string
+	ScheledFor    time.Time
+	ActualDate    time.Time
+	Tags          map[string]bool
+	Value         int
+	KindId        int
 }
 
 type TransactionItem struct {
-	Name    string
-	Cost    int
-	CostCur string
-	Tags    map[string]bool
+	Id            string
+	TransactionId string
+	Name          string
+	UnitCost      int
+	KindId        string
+	Quantity      float64
+	TotalCost     int
+	Tags          map[string]bool
 }
 
 func (t Transaction) TypeName() string {
