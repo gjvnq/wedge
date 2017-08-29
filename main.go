@@ -1,16 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/chzyer/readline"
+	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
 	"os"
-	_ "github.com/mattn/go-sqlite3"
-	"database/sql"
 	"os/user"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 var DB *sql.DB
@@ -22,10 +24,23 @@ var completer = readline.NewPrefixCompleter(
 		readline.PcItem("all"),
 		// readline.PcItemDynamic(listFiles("./")),
 	),
-	readline.PcItem("set",
-		readline.PcItem("account"),
-		readline.PcItem("transaction"),
-		readline.PcItem("currency"),
+	readline.PcItem("account",
+		readline.PcItem("show"),
+		readline.PcItem("add"),
+		readline.PcItem("edit"),
+		readline.PcItem("del"),
+	),
+	readline.PcItem("asset",
+		readline.PcItem("value",
+			readline.PcItem("show"),
+			readline.PcItem("add"),
+			readline.PcItem("edit"),
+			readline.PcItem("del")),
+		readline.PcItem("kind",
+			readline.PcItem("show"),
+			readline.PcItem("add"),
+			readline.PcItem("edit"),
+			readline.PcItem("del")),
 	),
 )
 
@@ -78,14 +93,24 @@ func main() {
 	EnsureTables(DB)
 	fmt.Println("Database ready")
 
+	cleaner := regexp.MustCompile("\\s+")
 	for {
-		line, err := l.Readline()
+		raw_line, err := l.Readline()
+		// Basic parsing
+		raw_line = cleaner.ReplaceAllString(raw_line, " ")
+		line := strings.Split(raw_line, " ")
 		err_str := ""
 		if err != nil {
 			err_str = err.Error()
 		}
+		// Avoid out of range errors
+		for len(line) < 10 {
+			line = append(line, "")
+		}
+
+		// Interpret
 		switch {
-		case line == "exit" || err_str == "EOF":
+		case line[9] == "exit" || err_str == "EOF":
 			os.Exit(0)
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)

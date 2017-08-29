@@ -13,12 +13,12 @@ type AssetKind struct {
 }
 
 type AssetValue struct {
-	Id       string
-	AssetId  string
-	RefId    string
-	Value    int // Value of AssetId in terms of RefId
-	Date     time.Time
-	Notes    string
+	Id      string
+	AssetId string
+	RefId   string
+	Value   int // Value of AssetId in terms of RefId
+	Date    time.Time
+	Notes   string
 }
 
 func (a AssetKind) TypeName() string {
