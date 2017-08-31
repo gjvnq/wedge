@@ -6,24 +6,20 @@ import (
 	"fmt"
 	"github.com/chzyer/readline"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mgutz/str"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
 	"path/filepath"
-	"regexp"
-	"strings"
 )
+
+const UNSET_STR = "\tUNSET\n"
 
 var DB *sql.DB
 
 var completer = readline.NewPrefixCompleter(
-	readline.PcItem("save"),
 	readline.PcItem("exit"),
-	readline.PcItem("show",
-		readline.PcItem("all"),
-		// readline.PcItemDynamic(listFiles("./")),
-	),
 	readline.PcItem("account",
 		readline.PcItem("show"),
 		readline.PcItem("add"),
@@ -68,6 +64,12 @@ func jsonToFile(filename string, v interface{}) error {
 	return ioutil.WriteFile(filename, dat, os.FileMode(int(0555)))
 }
 
+func set_str(source string, destination *string) {
+	if source != UNSET_STR {
+		*destination = source
+	}
+}
+
 func main() {
 	// Preapre readline
 	l, err := readline.NewEx(&readline.Config{
@@ -93,12 +95,13 @@ func main() {
 	EnsureTables(DB)
 	fmt.Println("Database ready")
 
-	cleaner := regexp.MustCompile("\\s+")
+	// Prepare stuff
+	account_prep()
+
 	for {
 		raw_line, err := l.Readline()
 		// Basic parsing
-		raw_line = cleaner.ReplaceAllString(raw_line, " ")
-		line := strings.Split(raw_line, " ")
+		line := str.ToArgv(raw_line)
 		err_str := ""
 		if err != nil {
 			err_str = err.Error()
@@ -107,11 +110,18 @@ func main() {
 		for len(line) < 10 {
 			line = append(line, "")
 		}
-
 		// Interpret
 		switch {
-		case line[9] == "exit" || err_str == "EOF":
+		case line[0] == "exit" || err_str == "EOF":
 			os.Exit(0)
+		case line[0] == "account" && line[1] == "show":
+			account_show(line[2:])
+		case line[0] == "account" && line[1] == "add":
+			account_add(line[2:])
+		case line[0] == "account" && line[1] == "edit":
+			account_edit(line[2:])
+		case line[0] == "account" && line[1] == "del":
+			account_del(line[2:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}
