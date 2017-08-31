@@ -66,3 +66,7 @@ func (tp TransactionPart) TypeName() string {
 func (ti TransactionItem) TypeName() string {
 	return "TransactionItem"
 }
+
+func CompleteTransaction(prefix string) []string {
+	return []string{"A", "B"}
+}

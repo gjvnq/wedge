@@ -28,3 +28,11 @@ func (a AssetKind) TypeName() string {
 func (av AssetValue) TypeName() string {
 	return "AssetValue"
 }
+
+func CompleteAssetKind(prefix string) []string {
+	return []string{"A", "B"}
+}
+
+func CompleteAssetValue(prefix string) []string {
+	return []string{"A", "B"}
+}

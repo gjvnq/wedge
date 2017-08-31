@@ -165,3 +165,7 @@ func account_prep() {
 	AccountFlagSet.StringVar(&AccountFlagSetDesc, "desc", UNSET_STR, "")
 	AccountFlagSet.StringVar(&AccountFlagSetParentId, "parent-id", UNSET_STR, "")
 }
+
+func CompleteAccount(prefix string) []string {
+	return []string{"A", "B"}
+}
