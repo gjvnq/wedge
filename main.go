@@ -17,6 +17,7 @@ import (
 const UNSET_STR = "\tUNSET\n"
 
 var DB *sql.DB
+var Line *readline.Instance
 
 var completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
@@ -83,9 +84,10 @@ func set_str(source string, destination *string) {
 }
 
 func main() {
+	var err error
 	// Preapre readline
-	l, err := readline.NewEx(&readline.Config{
-		Prompt:            "\033[31m»\033[0m ",
+	Line, err = readline.NewEx(&readline.Config{
+		Prompt:            "» ",
 		HistoryFile:       getHistoryFile(),
 		AutoComplete:      completer,
 		InterruptPrompt:   "^C",
@@ -95,7 +97,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer l.Close()
+	defer Line.Close()
 
 	// Open database
 	fmt.Println("Opening database...")
@@ -111,7 +113,8 @@ func main() {
 	account_prep()
 
 	for {
-		raw_line, err := l.Readline()
+		Line.SetPrompt("\033[31m»\033[0m ")
+		raw_line, err := Line.Readline()
 		// Basic parsing
 		line := str.ToArgv(raw_line)
 		err_str := ""
