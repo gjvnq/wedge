@@ -7,6 +7,7 @@ import (
 	. "github.com/logrusorgru/aurora"
 	"github.com/mgutz/str"
 	"log"
+	"math"
 	"strings"
 )
 
@@ -54,6 +55,21 @@ func (ak AssetKind) MultilineString() string {
 	s += fmt.Sprintf("%s %s\n", Bold("          Desc:"), ak.Desc)
 	s += fmt.Sprintf("%s %d\n", Bold("Decimal places:"), ak.DecimalPlaces)
 	return s
+}
+
+func fmt_decimal(raw, decimal_places int) string {
+	div := int(math.Pow10(decimal_places))
+	quotient := raw / div
+	remainder := raw - div
+	return fmt.Sprintf("%d.%d", quotient, remainder)
+}
+
+func fmt_decimal_pad(raw, decimal_places, pad int) string {
+	div := int(math.Pow10(decimal_places))
+	quotient := raw / div
+	remainder := raw - div
+	pad_str := fmt.Sprintf("%d", pad)
+	return fmt.Sprintf("%%"+pad_str+"d.%d", quotient, remainder)
 }
 
 func asset_kind_add(line []string) {
