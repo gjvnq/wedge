@@ -34,7 +34,7 @@ var completer = readline.NewPrefixCompleter(
 			readline.PcItem("transaction")),
 	),
 	readline.PcItem("account",
-		readline.PcItem("show"),
+		readline.PcItem("show", readline.PcItemDynamic(CompleteAccount)),
 		readline.PcItem("add"),
 		readline.PcItem("edit"),
 		readline.PcItem("del"),
@@ -46,7 +46,7 @@ var completer = readline.NewPrefixCompleter(
 			readline.PcItem("edit"),
 			readline.PcItem("del")),
 		readline.PcItem("kind",
-			readline.PcItem("show"),
+			readline.PcItem("show", readline.PcItemDynamic(CompleteAssetKind)),
 			readline.PcItem("add"),
 			readline.PcItem("edit"),
 			readline.PcItem("del")),
@@ -83,6 +83,20 @@ func set_str(source string, destination *string) {
 	}
 }
 
+func ask_user(line *readline.Instance, prompt string, what string) (string, error) {
+	line.SetPrompt(prompt)
+	return line.ReadlineWithDefault(what)
+}
+
+func must_ask_user(line *readline.Instance, prompt string, what string) string {
+	line.SetPrompt(prompt)
+	s, err := line.ReadlineWithDefault(what)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return s
+}
+
 func main() {
 	var err error
 	// Preapre readline
@@ -111,6 +125,7 @@ func main() {
 
 	// Prepare stuff
 	account_prep()
+	asset_kind_prep()
 
 	for {
 		Line.SetPrompt("\033[31m»\033[0m ")
@@ -137,6 +152,14 @@ func main() {
 			account_edit(line[2:])
 		case line[0] == "account" && line[1] == "del":
 			account_del(line[2:])
+		case line[0] == "asset" && line[1] == "kind" && line[2] == "show":
+			asset_kind_show(line[3:])
+		case line[0] == "asset" && line[1] == "kind" && line[2] == "add":
+			asset_kind_add(line[3:])
+		// case line[0] == "asset" && line[1] == "kind" && line[2] == "edit":
+		// 	asset_kind_edit(line[3:])
+		// case line[0] == "asset" && line[1] == "kind" && line[2] == "del":
+		// 	asset_kind_del(line[3:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}

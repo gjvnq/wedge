@@ -4,7 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	. "github.com/logrusorgru/aurora"
 	"log"
+	"strings"
 )
 
 type Account struct {
@@ -42,10 +44,19 @@ func (acc Account) Del(id string) error {
 	return err
 }
 
-func (acc *Account) Get(id string) error {
+func (acc *Account) Load(id string) error {
 	err := DB.QueryRow("SELECT `Id`, `ParentId`, `Name`, `Desc` FROM `Account` WHERE `Id` = ?", id).
 		Scan(&acc.Id, &acc.ParentId, &acc.Name, &acc.Desc)
 	return err
+}
+
+func (acc Account) MultilineString() string {
+	s := ""
+	s += fmt.Sprintf("%s %s\n", Bold("      Id:"), acc.Id)
+	s += fmt.Sprintf("%s %s\n", Bold("ParentId:"), acc.ParentId)
+	s += fmt.Sprintf("%s %s\n", Bold("    Name:"), acc.Name)
+	s += fmt.Sprintf("%s %s\n", Bold("    Desc:"), acc.Desc)
+	return s
 }
 
 func account_show(line []string) {
@@ -66,8 +77,7 @@ func account_show(line []string) {
 		accs = append(accs, acc)
 	}
 	if len(accs) == 1 {
-		acc := accs[0]
-		fmt.Printf("Id: %s ParentId: %s Name: %s Desc: %s\n", acc.Id, acc.ParentId, acc.Name, acc.Desc)
+		fmt.Printf(accs[0].MultilineString())
 		return
 	}
 	printed := make(map[string]bool)
@@ -121,7 +131,7 @@ func account_add(line []string) {
 func account_edit(line []string) {
 	acc := Account{}
 	AccountFlagSet.Parse(line)
-	err := acc.Get(AccountFlagSetId)
+	err := acc.Load(AccountFlagSetId)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -167,5 +177,22 @@ func account_prep() {
 }
 
 func CompleteAccount(prefix string) []string {
-	return []string{"A", "B"}
+	tmp := strings.Split(prefix, " ")
+	spec := tmp[len(tmp)-1]
+	rows, err := DB.Query("SELECT `Id` FROM `Account` WHERE `Id` LIKE '"+spec+"%%' OR ? = ''", spec)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Read accounts
+	found := make([]string, 0)
+	defer rows.Close()
+	for rows.Next() {
+		s := ""
+		err := rows.Scan(&s)
+		if err != nil {
+			log.Fatal(err)
+		}
+		found = append(found, s)
+	}
+	return found
 }
