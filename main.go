@@ -21,18 +21,6 @@ var Line *readline.Instance
 
 var completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
-	readline.PcItem("cursor",
-		readline.PcItem("set",
-			readline.PcItem("account", readline.PcItemDynamic(CompleteAccount)),
-			readline.PcItem("asset-kind", readline.PcItemDynamic(CompleteAssetKind)),
-			readline.PcItem("asset-value", readline.PcItemDynamic(CompleteAssetValue)),
-			readline.PcItem("transaction", readline.PcItemDynamic(CompleteTransaction))),
-		readline.PcItem("get",
-			readline.PcItem("account"),
-			readline.PcItem("asset-kind"),
-			readline.PcItem("asset-value"),
-			readline.PcItem("transaction")),
-	),
 	readline.PcItem("account",
 		readline.PcItem("show", readline.PcItemDynamic(CompleteAccount)),
 		readline.PcItem("add"),
