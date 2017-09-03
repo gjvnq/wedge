@@ -10,6 +10,7 @@ import (
 )
 
 const DATE_FMT = "2006-01-02-15:04:05-MST"
+const DAY_FMT = "2006-01-02"
 
 type AssetValue struct {
 	Id      string
@@ -32,9 +33,9 @@ func (av *AssetValue) GenId() {
 	)
 }
 
-func (av AssetValue) Save() error {
+func (av *AssetValue) Save() error {
 	if len(av.Id) <= 0 {
-		return errors.New("All asset values must have a non empty id")
+		av.GenId()
 	}
 	if len(av.AssetId) <= 0 {
 		return errors.New("All asset values must have a non empty AssetId")
@@ -42,7 +43,7 @@ func (av AssetValue) Save() error {
 	if len(av.RefId) <= 0 {
 		return errors.New("All asset values must have a non empty RefId")
 	}
-	_, err := DB.Exec("INSERT INTO `AssetValue` (`Id`, `AssetId`, `RefId`, `Value`, `Date`, `Notes`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", av.Id, av.AssetId, av.RefId, av.Value, av.Date.Unix(), av.Notes)
+	_, err := DB.Exec("INSERT INTO `AssetValue` (`Id`, `AssetId`, `RefId`, `Value`, `Date`, `Notes`) VALUES (?, ?, ?, ?, ?, ?)", av.Id, av.AssetId, av.RefId, av.Value, av.Date.Unix(), av.Notes)
 	return err
 }
 
@@ -64,6 +65,15 @@ func (av *AssetValue) Load(id string) error {
 	return err
 }
 
+func (av AssetValue) ValueStr() string {
+	ak := AssetKind{}
+	err := ak.Load(av.RefId)
+	if err != nil {
+		return "ERR"
+	}
+	return fmt_decimal(av.Value, ak.DecimalPlaces)
+}
+
 func (av AssetValue) MultilineString() string {
 	val_str := fmt.Sprintf("%d (raw/faield to load AssetKind)", av.Value)
 	ak := AssetKind{}
@@ -81,7 +91,73 @@ func (av AssetValue) MultilineString() string {
 	return s
 }
 
-func CompleteAssetValue(prefix string) []string {
+func asset_value_show(line []string) {
+	spec := ""
+	if len(line) > 0 {
+		spec = line[0]
+	}
+	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR `RefId` = ? OR ? = ''", spec, spec, spec, spec)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Read accounts
+	avs := make([]AssetValue, 0)
+	defer rows.Close()
+	for rows.Next() {
+		av := AssetValue{}
+		id := ""
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = av.Load(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		avs = append(avs, av)
+	}
+	if len(avs) == 1 {
+		fmt.Printf(avs[0].MultilineString())
+		return
+	}
+	fmt.Printf("%10s | %10s | %10s | %s\n", "AssetId", "RefId", "Value", "Date")
+	fmt.Println("-----------+------------+------------+------------------------------------------")
+	for _, av := range avs {
+		fmt.Printf("%10s | %10s | %10s | %s\n", av.AssetId, av.RefId, av.ValueStr(), av.Date.Format(DAY_FMT))
+	}
+}
+
+func asset_value_add(line []string) {
+	av := AssetValue{}
+	// Ask user
+	LocalLine.Config.AutoComplete = CompleterAssetKind
+	av.AssetId = must_ask_user(LocalLine, Sprintf(Bold("AssetId: ")), "")
+	av.RefId = must_ask_user(LocalLine, Sprintf(Bold("RefId: ")), "")
+	LocalLine.Config.AutoComplete = nil
+	val_str := must_ask_user(LocalLine, Sprintf(Bold("Value: ")), "")
+	date_str := must_ask_user(LocalLine, Sprintf(Bold("Date: ")), "")
+	// Load Ref AssetKind
+	ak := AssetKind{}
+	err := ak.Load(av.RefId)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	// Parse stuff
+	av.Value = parse_decimal(val_str, ak.DecimalPlaces)
+	av.Date, err = time.Parse(DAY_FMT, date_str)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	// Save
+	err = av.Save()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func CompleteAssetValueFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]
 	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` LIKE '"+spec+"%%' OR ? = ''", spec)

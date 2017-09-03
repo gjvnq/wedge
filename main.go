@@ -12,34 +12,39 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 const UNSET_STR = "\tUNSET\n"
 
 var DB *sql.DB
-var Line *readline.Instance
+var GlobalLine *readline.Instance
+var LocalLine *readline.Instance
 
-var completer = readline.NewPrefixCompleter(
+var PcItemAccount = readline.PcItemDynamic(CompleteAccountFunc)
+var PcItemAssetValue = readline.PcItemDynamic(CompleteAssetValueFunc)
+var PcItemAssetKind = readline.PcItemDynamic(CompleteAssetKindFunc)
+var CompleterAccount = readline.NewPrefixCompleter(PcItemAccount)
+var CompleterAssetValue = readline.NewPrefixCompleter(PcItemAssetValue)
+var CompleterAssetKind = readline.NewPrefixCompleter(PcItemAssetKind)
+var Completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
 	readline.PcItem("account",
-		readline.PcItem("show", readline.PcItemDynamic(CompleteAccount)),
+		readline.PcItem("show", PcItemAccount),
 		readline.PcItem("add"),
-		readline.PcItem("edit", readline.PcItemDynamic(CompleteAccount)),
-		readline.PcItem("del", readline.PcItemDynamic(CompleteAccount)),
-	),
+		readline.PcItem("edit", PcItemAccount),
+		readline.PcItem("del", PcItemAccount)),
 	readline.PcItem("asset",
 		readline.PcItem("value",
-			readline.PcItem("show", readline.PcItemDynamic(CompleteAssetValue)),
+			readline.PcItem("show", PcItemAssetValue),
 			readline.PcItem("add"),
-			readline.PcItem("edit", readline.PcItemDynamic(CompleteAssetValue)),
-			readline.PcItem("del", readline.PcItemDynamic(CompleteAssetValue))),
+			readline.PcItem("edit", PcItemAssetValue),
+			readline.PcItem("del", PcItemAssetValue)),
 		readline.PcItem("kind",
-			readline.PcItem("show", readline.PcItemDynamic(CompleteAssetKind)),
+			readline.PcItem("show", PcItemAssetKind),
 			readline.PcItem("add"),
-			readline.PcItem("edit", readline.PcItemDynamic(CompleteAssetKind)),
-			readline.PcItem("del", readline.PcItemDynamic(CompleteAssetKind))),
-	),
-)
+			readline.PcItem("edit", PcItemAssetKind),
+			readline.PcItem("del", PcItemAssetKind))))
 
 func getHistoryFile() string {
 	usr, err := user.Current()
@@ -82,16 +87,16 @@ func must_ask_user(line *readline.Instance, prompt string, what string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return s
+	return strings.TrimSpace(s)
 }
 
 func main() {
 	var err error
 	// Preapre readline
-	Line, err = readline.NewEx(&readline.Config{
+	GlobalLine, err = readline.NewEx(&readline.Config{
 		Prompt:            "» ",
 		HistoryFile:       getHistoryFile(),
-		AutoComplete:      completer,
+		AutoComplete:      Completer,
 		InterruptPrompt:   "^C",
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,
@@ -99,7 +104,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer Line.Close()
+	// Preapre readline
+	LocalLine, err = readline.NewEx(&readline.Config{
+		Prompt:          "» ",
+		HistoryLimit:    -1,
+		InterruptPrompt: "^C",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer LocalLine.Close()
 
 	// Open database
 	fmt.Println("Opening database...")
@@ -111,13 +125,9 @@ func main() {
 	EnsureTables(DB)
 	fmt.Println("Database ready")
 
-	// Prepare stuff
-	account_prep()
-	asset_kind_prep()
-
 	for {
-		Line.SetPrompt("\033[31m»\033[0m ")
-		raw_line, err := Line.Readline()
+		GlobalLine.SetPrompt("\033[31m»\033[0m ")
+		raw_line, err := GlobalLine.Readline()
 		// Basic parsing
 		line := str.ToArgv(raw_line)
 		err_str := ""
@@ -148,6 +158,14 @@ func main() {
 			asset_kind_edit(line[3:])
 		case line[0] == "asset" && line[1] == "kind" && line[2] == "del":
 			asset_kind_del(line[3:])
+		case line[0] == "asset" && line[1] == "value" && line[2] == "show":
+			asset_value_show(line[3:])
+		case line[0] == "asset" && line[1] == "value" && line[2] == "add":
+			asset_value_add(line[3:])
+		// case line[0] == "asset" && line[1] == "value" && line[2] == "edit":
+		// 	asset_value_edit(line[3:])
+		// case line[0] == "asset" && line[1] == "value" && line[2] == "del":
+		// 	asset_value_del(line[3:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}

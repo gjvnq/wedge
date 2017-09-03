@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/chzyer/readline"
 	. "github.com/logrusorgru/aurora"
 	"log"
 	"strings"
@@ -16,8 +15,6 @@ type Account struct {
 	Desc     string
 	Tags     map[string]bool
 }
-
-var AccountLine *readline.Instance
 
 func (acc Account) Save() error {
 	if len(acc.Id) <= 0 {
@@ -116,12 +113,12 @@ func account_show_print_children(level int, parent Account, printed map[string]b
 
 func account_add(line []string) {
 	acc := Account{}
-	acc.Id = must_ask_user(AccountLine, Sprintf(Bold("Id: ")), "")
-	AccountLine.Config.AutoComplete = readline.PcItemDynamic(CompleteAccount)
-	acc.ParentId = must_ask_user(AccountLine, Sprintf(Bold("ParentId: ")), "")
-	AccountLine.Config.AutoComplete = nil
-	acc.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), "")
-	acc.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), "")
+	acc.Id = must_ask_user(LocalLine, Sprintf(Bold("Id: ")), "")
+	LocalLine.Config.AutoComplete = CompleterAccount
+	acc.ParentId = must_ask_user(LocalLine, Sprintf(Bold("ParentId: ")), "")
+	LocalLine.Config.AutoComplete = nil
+	acc.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), "")
+	acc.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), "")
 	err := acc.Save()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -136,11 +133,11 @@ func account_edit(line []string) {
 		return
 	}
 
-	AccountLine.Config.AutoComplete = readline.PcItemDynamic(CompleteAccount)
-	acc.ParentId = must_ask_user(AccountLine, Sprintf(Bold("ParentId: ")), acc.ParentId)
-	AccountLine.Config.AutoComplete = nil
-	acc.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), acc.Name)
-	acc.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), acc.Desc)
+	LocalLine.Config.AutoComplete = CompleterAccount
+	acc.ParentId = must_ask_user(LocalLine, Sprintf(Bold("ParentId: ")), acc.ParentId)
+	LocalLine.Config.AutoComplete = nil
+	acc.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), acc.Name)
+	acc.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), acc.Desc)
 	err = acc.Update()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -167,20 +164,7 @@ func account_del(line []string) {
 	fmt.Println(Bold("Deletion done"))
 }
 
-func account_prep() {
-	var err error
-	// Preapre readline
-	AccountLine, err = readline.NewEx(&readline.Config{
-		Prompt:          "» ",
-		HistoryLimit:    -1,
-		InterruptPrompt: "^C",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func CompleteAccount(prefix string) []string {
+func CompleteAccountFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]
 	rows, err := DB.Query("SELECT `Id` FROM `Account` WHERE `Id` LIKE '"+spec+"%%' OR ? = ''", spec)

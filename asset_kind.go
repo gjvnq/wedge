@@ -3,15 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/chzyer/readline"
 	. "github.com/logrusorgru/aurora"
 	"github.com/mgutz/str"
 	"log"
 	"math"
 	"strings"
 )
-
-var AssetKindLine *readline.Instance
 
 type AssetKind struct {
 	Id            string
@@ -57,17 +54,43 @@ func (ak AssetKind) MultilineString() string {
 	return s
 }
 
+func parse_decimal(input string, decimal_places int) int {
+	input = strings.TrimSpace(input)
+	tmp := ""
+	places := 0
+	after_dot := false
+	for _, cur_rune := range input {
+		char := string(cur_rune)
+		switch {
+		case char == ".":
+			after_dot = true
+		case after_dot == false:
+			tmp += char
+		case after_dot == true && places < decimal_places:
+			tmp += char
+			places++
+		default:
+			continue
+		}
+	}
+	for places < decimal_places {
+		tmp += "0"
+		places++
+	}
+	return str.ToIntOr(tmp, 0)
+}
+
 func fmt_decimal(raw, decimal_places int) string {
 	div := int(math.Pow10(decimal_places))
 	quotient := raw / div
-	remainder := raw - div
+	remainder := raw - div*quotient
 	return fmt.Sprintf("%d.%d", quotient, remainder)
 }
 
 func fmt_decimal_pad(raw, decimal_places, pad int) string {
 	div := int(math.Pow10(decimal_places))
 	quotient := raw / div
-	remainder := raw - div
+	remainder := raw - div*quotient
 	pad_str := fmt.Sprintf("%d", pad)
 	return fmt.Sprintf("%%"+pad_str+"d.%d", quotient, remainder)
 }
@@ -75,10 +98,10 @@ func fmt_decimal_pad(raw, decimal_places, pad int) string {
 func asset_kind_add(line []string) {
 	ak := AssetKind{}
 	// Ask user
-	ak.Id = must_ask_user(AssetKindLine, Sprintf(Bold("Id: ")), "")
-	ak.Name = must_ask_user(AssetKindLine, Sprintf(Bold("Name: ")), "")
-	ak.Desc = must_ask_user(AssetKindLine, Sprintf(Bold("Desc: ")), "")
-	ak.DecimalPlaces = str.ToIntOr(must_ask_user(AssetKindLine, Sprintf(Bold("DecimalPlaces: ")), ""), 0)
+	ak.Id = must_ask_user(LocalLine, Sprintf(Bold("Id: ")), "")
+	ak.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), "")
+	ak.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), "")
+	ak.DecimalPlaces = str.ToIntOr(must_ask_user(LocalLine, Sprintf(Bold("DecimalPlaces: ")), ""), 0)
 	err := ak.Save()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -86,7 +109,10 @@ func asset_kind_add(line []string) {
 }
 
 func asset_kind_show(line []string) {
-	spec := line[0]
+	spec := ""
+	if len(line) > 0 {
+		spec = line[0]
+	}
 	rows, err := DB.Query("SELECT `Id`, `Name`, `Desc`, `DecimalPlaces` FROM `AssetKind` WHERE `Id` = ? OR `Name` LIKE '%%"+spec+"%%' OR ? = ''", spec, spec)
 	if err != nil {
 		log.Fatal(err)
@@ -122,10 +148,10 @@ func asset_kind_edit(line []string) {
 		return
 	}
 
-	ak.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), ak.Name)
-	ak.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), ak.Desc)
+	ak.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), ak.Name)
+	ak.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), ak.Desc)
 	tmp := fmt.Sprintf("%d", ak.DecimalPlaces)
-	ak.DecimalPlaces = str.ToIntOr(must_ask_user(AssetKindLine, Sprintf(Bold("DecimalPlaces: ")), tmp), ak.DecimalPlaces)
+	ak.DecimalPlaces = str.ToIntOr(must_ask_user(LocalLine, Sprintf(Bold("DecimalPlaces: ")), tmp), ak.DecimalPlaces)
 	err = ak.Update()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -152,20 +178,7 @@ func asset_kind_del(line []string) {
 	fmt.Println(Bold("Deletion done"))
 }
 
-func asset_kind_prep() {
-	var err error
-	// Preapre readline
-	AssetKindLine, err = readline.NewEx(&readline.Config{
-		Prompt:          "» ",
-		HistoryLimit:    -1,
-		InterruptPrompt: "^C",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func CompleteAssetKind(prefix string) []string {
+func CompleteAssetKindFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]
 	rows, err := DB.Query("SELECT `Id` FROM `AssetKind` WHERE `Id` LIKE '"+spec+"%%' OR ? = ''", spec)
