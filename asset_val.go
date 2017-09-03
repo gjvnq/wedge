@@ -3,10 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	. "github.com/logrusorgru/aurora"
 	"log"
 	"strings"
 	"time"
+
+	. "github.com/logrusorgru/aurora"
 )
 
 const DATE_FMT = "2006-01-02-15:04:05-MST"

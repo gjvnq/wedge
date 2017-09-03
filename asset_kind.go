@@ -3,11 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	. "github.com/logrusorgru/aurora"
-	"github.com/mgutz/str"
 	"log"
 	"math"
 	"strings"
+
+	. "github.com/logrusorgru/aurora"
+	"github.com/mgutz/str"
 )
 
 type AssetKind struct {

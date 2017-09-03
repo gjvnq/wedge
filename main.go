@@ -3,16 +3,18 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/chzyer/readline"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/mgutz/str"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
+
+	"github.com/chzyer/readline"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/mgutz/str"
 )
 
 const UNSET_STR = "\tUNSET\n"
@@ -20,13 +22,16 @@ const UNSET_STR = "\tUNSET\n"
 var DB *sql.DB
 var GlobalLine *readline.Instance
 var LocalLine *readline.Instance
+var NotImplementedErr = errors.New("Not Implemented")
 
 var PcItemAccount = readline.PcItemDynamic(CompleteAccountFunc)
 var PcItemAssetValue = readline.PcItemDynamic(CompleteAssetValueFunc)
 var PcItemAssetKind = readline.PcItemDynamic(CompleteAssetKindFunc)
+var PcItemTransaction = readline.PcItemDynamic(CompleteTransactionFunc)
 var CompleterAccount = readline.NewPrefixCompleter(PcItemAccount)
 var CompleterAssetValue = readline.NewPrefixCompleter(PcItemAssetValue)
 var CompleterAssetKind = readline.NewPrefixCompleter(PcItemAssetKind)
+var CompleterTransaction = readline.NewPrefixCompleter(PcItemTransaction)
 var Completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
 	readline.PcItem("account",
@@ -44,7 +49,15 @@ var Completer = readline.NewPrefixCompleter(
 			readline.PcItem("show", PcItemAssetKind),
 			readline.PcItem("add"),
 			readline.PcItem("edit", PcItemAssetKind),
-			readline.PcItem("del", PcItemAssetKind))))
+			readline.PcItem("del", PcItemAssetKind))),
+	readline.PcItem("transaction",
+		readline.PcItem("show", PcItemTransaction),
+		readline.PcItem("add"),
+		readline.PcItem("del", PcItemTransaction),
+		readline.PcItem("edit",
+			readline.PcItem("core", PcItemTransaction),
+			readline.PcItem("parts", PcItemTransaction),
+			readline.PcItem("items", PcItemTransaction))))
 
 func getHistoryFile() string {
 	usr, err := user.Current()
@@ -166,6 +179,8 @@ func main() {
 			asset_value_edit(line[3:])
 		case line[0] == "asset" && line[1] == "value" && line[2] == "del":
 			asset_value_del(line[3:])
+		case line[0] == "transaction" && line[1] == "add":
+			transaction_add(line[2:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}

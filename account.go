@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	. "github.com/logrusorgru/aurora"
 	"log"
 	"strings"
+
+	. "github.com/logrusorgru/aurora"
 )
 
 type Account struct {
