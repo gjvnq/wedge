@@ -141,6 +141,10 @@ func asset_kind_show(line []string) {
 }
 
 func asset_kind_edit(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
 	ak := AssetKind{}
 	err := ak.Load(line[len(line)-1])
 	if err != nil {
@@ -159,6 +163,10 @@ func asset_kind_edit(line []string) {
 }
 
 func asset_kind_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
 	id := line[len(line)-1]
 	ak := AssetKind{}
 	conf := "DEL-" + id

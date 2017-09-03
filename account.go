@@ -126,6 +126,10 @@ func account_add(line []string) {
 }
 
 func account_edit(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
 	acc := Account{}
 	err := acc.Load(line[len(line)-1])
 	if err != nil {
@@ -145,6 +149,10 @@ func account_edit(line []string) {
 }
 
 func account_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
 	id := line[len(line)-1]
 	acc := Account{}
 	conf := "DEL-" + id

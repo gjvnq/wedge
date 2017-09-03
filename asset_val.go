@@ -10,6 +10,7 @@ import (
 )
 
 const DATE_FMT = "2006-01-02-15:04:05-MST"
+const DATE_FMT_SPACES = "2006-01-02 15:04:05 MST"
 const DAY_FMT = "2006-01-02"
 
 type AssetValue struct {
@@ -65,7 +66,7 @@ func (av *AssetValue) Load(id string) error {
 	return err
 }
 
-func (av AssetValue) ValueStr() string {
+func (av AssetValue) ValueToStr() string {
 	ak := AssetKind{}
 	err := ak.Load(av.RefId)
 	if err != nil {
@@ -74,19 +75,31 @@ func (av AssetValue) ValueStr() string {
 	return fmt_decimal(av.Value, ak.DecimalPlaces)
 }
 
+func (av AssetValue) StrToValue(val_str string) {
+	// Load Ref AssetKind
+	ak := AssetKind{}
+	err := ak.Load(av.RefId)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	// Parse stuff
+	av.Value = parse_decimal(val_str, ak.DecimalPlaces)
+}
+
 func (av AssetValue) MultilineString() string {
 	val_str := fmt.Sprintf("%d (raw/faield to load AssetKind)", av.Value)
 	ak := AssetKind{}
 	err := ak.Load(av.RefId)
 	if err == nil {
-		val_str = fmt.Sprintf("1 %s = %s %s", Bold(av.AssetId), fmt_decimal(av.Value, ak.DecimalPlaces), Bold(av.RefId))
+		val_str = fmt.Sprintf("%s %s = %s %s", Cyan("1"), Bold(av.AssetId), Cyan(fmt_decimal(av.Value, ak.DecimalPlaces)), Bold(av.RefId))
 	}
 	s := ""
 	s += fmt.Sprintf("%s %s\n", Bold("     Id:"), av.Id)
 	s += fmt.Sprintf("%s %s\n", Bold("AssetId:"), av.AssetId)
 	s += fmt.Sprintf("%s %s\n", Bold("  RefId:"), av.RefId)
 	s += fmt.Sprintf("%s %s\n", Bold("  Value:"), val_str)
-	s += fmt.Sprintf("%s %s\n", Bold("   Date:"), av.Date.Format(DATE_FMT))
+	s += fmt.Sprintf("%s %s\n", Bold("   Date:"), av.Date.Format(DATE_FMT_SPACES))
 	s += fmt.Sprintf("%s %s\n", Bold("  Notes:"), av.Notes)
 	return s
 }
@@ -96,7 +109,7 @@ func asset_value_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR `RefId` = ? OR ? = ''", spec, spec, spec, spec)
+	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR ? = ''", spec, spec, spec, spec)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,11 +136,12 @@ func asset_value_show(line []string) {
 	fmt.Printf("%10s | %10s | %10s | %s\n", "AssetId", "RefId", "Value", "Date")
 	fmt.Println("-----------+------------+------------+------------------------------------------")
 	for _, av := range avs {
-		fmt.Printf("%10s | %10s | %10s | %s\n", av.AssetId, av.RefId, av.ValueStr(), av.Date.Format(DAY_FMT))
+		fmt.Printf("%10s | %10s | %10s | %s\n", av.AssetId, av.RefId, av.ValueToStr(), av.Date.Format(DAY_FMT))
 	}
 }
 
 func asset_value_add(line []string) {
+	var err error
 	av := AssetValue{}
 	// Ask user
 	LocalLine.Config.AutoComplete = CompleterAssetKind
@@ -136,15 +150,8 @@ func asset_value_add(line []string) {
 	LocalLine.Config.AutoComplete = nil
 	val_str := must_ask_user(LocalLine, Sprintf(Bold("Value: ")), "")
 	date_str := must_ask_user(LocalLine, Sprintf(Bold("Date: ")), "")
-	// Load Ref AssetKind
-	ak := AssetKind{}
-	err := ak.Load(av.RefId)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 	// Parse stuff
-	av.Value = parse_decimal(val_str, ak.DecimalPlaces)
+	av.StrToValue(val_str)
 	av.Date, err = time.Parse(DAY_FMT, date_str)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -157,10 +164,59 @@ func asset_value_add(line []string) {
 	}
 }
 
+func asset_value_edit(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	av := AssetValue{}
+	err := av.Load(line[len(line)-1])
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Println(Bold("     Id:"), av.Id, Gray(" (non editable)"))
+	fmt.Println(Bold("AssetId:"), av.AssetId, Gray(" (non editable)"))
+	fmt.Println(Bold("  RefId:"), av.RefId, Gray(" (non editable)"))
+	fmt.Println(Bold("   Date:"), av.Date, Gray(" (non editable)"))
+	tmp := must_ask_user(LocalLine, Sprintf(Bold("  Value: ")), av.ValueToStr())
+	av.Notes = must_ask_user(LocalLine, Sprintf(Bold("  Notes: ")), av.Notes)
+	av.StrToValue(tmp)
+	err = av.Update()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func asset_value_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	id := line[len(line)-1]
+	av := AssetValue{}
+	conf := "DEL-" + id
+	input := ""
+	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
+	fmt.Scanln(&input)
+	if input != conf {
+		fmt.Println(Bold("Deletion avoided"))
+		return
+	}
+
+	err := av.Del(id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(Bold("Deletion done"))
+}
+
 func CompleteAssetValueFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]
-	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` LIKE '"+spec+"%%' OR ? = ''", spec)
+	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` LIKE '"+spec+"%%' OR ? = '' LIMIT 64", spec)
 	if err != nil {
 		log.Fatal(err)
 	}
