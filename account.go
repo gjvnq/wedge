@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
+	"github.com/chzyer/readline"
 	. "github.com/logrusorgru/aurora"
 	"log"
 	"strings"
@@ -17,11 +17,7 @@ type Account struct {
 	Tags     map[string]bool
 }
 
-var AccountFlagSet *flag.FlagSet
-var AccountFlagSetId string
-var AccountFlagSetName string
-var AccountFlagSetDesc string
-var AccountFlagSetParentId string
+var AccountLine *readline.Instance
 
 func (acc Account) Save() error {
 	if len(acc.Id) <= 0 {
@@ -60,7 +56,10 @@ func (acc Account) MultilineString() string {
 }
 
 func account_show(line []string) {
-	spec := line[0]
+	spec := ""
+	if len(line) > 0 {
+		spec = line[0]
+	}
 	rows, err := DB.Query("SELECT `Id`, `ParentId`, `Name`, `Desc` FROM `Account` WHERE `Id` = ? OR `Name` LIKE '%%"+spec+"%%' OR ? = ''", spec, spec)
 	if err != nil {
 		log.Fatal(err)
@@ -84,7 +83,7 @@ func account_show(line []string) {
 	account_show_print_children(-1, Account{}, printed, accs)
 	for _, acc := range accs {
 		if !printed[acc.Id] {
-			fmt.Printf("├─ %s (child of %s) - %s\n", acc.Id, acc.ParentId, acc.Name)
+			fmt.Printf("├─ %s (child of %s) %s\n", Bold(acc.Id), acc.ParentId, acc.Name)
 		}
 	}
 }
@@ -96,9 +95,9 @@ func account_show_print_children(level int, parent Account, printed map[string]b
 				fmt.Printf("┆")
 			}
 			if has_children {
-				fmt.Printf("├┬ %s - %s\n", parent.Id, parent.Name)
+				fmt.Printf("├┬ %s %s\n", Bold(parent.Id), parent.Name)
 			} else {
-				fmt.Printf("├─ %s - %s\n", parent.Id, parent.Name)
+				fmt.Printf("├─ %s %s\n", Bold(parent.Id), parent.Name)
 			}
 			printed[parent.Id] = true
 		}
@@ -117,11 +116,12 @@ func account_show_print_children(level int, parent Account, printed map[string]b
 
 func account_add(line []string) {
 	acc := Account{}
-	AccountFlagSet.Parse(line)
-	set_str(AccountFlagSetId, &acc.Id)
-	set_str(AccountFlagSetName, &acc.Name)
-	set_str(AccountFlagSetDesc, &acc.Desc)
-	set_str(AccountFlagSetParentId, &acc.ParentId)
+	acc.Id = must_ask_user(AccountLine, Sprintf(Bold("Id: ")), "")
+	AccountLine.Config.AutoComplete = readline.PcItemDynamic(CompleteAccount)
+	acc.ParentId = must_ask_user(AccountLine, Sprintf(Bold("ParentId: ")), "")
+	AccountLine.Config.AutoComplete = nil
+	acc.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), "")
+	acc.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), "")
 	err := acc.Save()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -130,14 +130,17 @@ func account_add(line []string) {
 
 func account_edit(line []string) {
 	acc := Account{}
-	AccountFlagSet.Parse(line)
-	err := acc.Load(AccountFlagSetId)
+	err := acc.Load(line[len(line)-1])
 	if err != nil {
 		fmt.Println(err.Error())
+		return
 	}
-	set_str(AccountFlagSetName, &acc.Name)
-	set_str(AccountFlagSetDesc, &acc.Desc)
-	set_str(AccountFlagSetParentId, &acc.ParentId)
+
+	AccountLine.Config.AutoComplete = readline.PcItemDynamic(CompleteAccount)
+	acc.ParentId = must_ask_user(AccountLine, Sprintf(Bold("ParentId: ")), acc.ParentId)
+	AccountLine.Config.AutoComplete = nil
+	acc.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), acc.Name)
+	acc.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), acc.Desc)
 	err = acc.Update()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -145,18 +148,14 @@ func account_edit(line []string) {
 }
 
 func account_del(line []string) {
-	id := ""
+	id := line[len(line)-1]
 	acc := Account{}
-	AccountFlagSet.Parse(line)
-	set_str(AccountFlagSetId, &id)
-
 	conf := "DEL-" + id
 	input := ""
-	fmt.Printf("Type '%s' to confirm deletion: ", conf)
+	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
 	fmt.Scanln(&input)
 	if input != conf {
-		fmt.Println("Deletion avoided")
-		fmt.Printf("You typed '%s' insted of '%s'\n", input, conf)
+		fmt.Println(Bold("Deletion avoided"))
 		return
 	}
 
@@ -165,15 +164,20 @@ func account_del(line []string) {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println("Deletion done")
+	fmt.Println(Bold("Deletion done"))
 }
 
 func account_prep() {
-	AccountFlagSet = flag.NewFlagSet("account", flag.ContinueOnError)
-	AccountFlagSet.StringVar(&AccountFlagSetId, "id", UNSET_STR, "")
-	AccountFlagSet.StringVar(&AccountFlagSetName, "name", UNSET_STR, "")
-	AccountFlagSet.StringVar(&AccountFlagSetDesc, "desc", UNSET_STR, "")
-	AccountFlagSet.StringVar(&AccountFlagSetParentId, "parent-id", UNSET_STR, "")
+	var err error
+	// Preapre readline
+	AccountLine, err = readline.NewEx(&readline.Config{
+		Prompt:          "» ",
+		HistoryLimit:    -1,
+		InterruptPrompt: "^C",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func CompleteAccount(prefix string) []string {

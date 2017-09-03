@@ -36,8 +36,8 @@ var completer = readline.NewPrefixCompleter(
 	readline.PcItem("account",
 		readline.PcItem("show", readline.PcItemDynamic(CompleteAccount)),
 		readline.PcItem("add"),
-		readline.PcItem("edit"),
-		readline.PcItem("del"),
+		readline.PcItem("edit", readline.PcItemDynamic(CompleteAccount)),
+		readline.PcItem("del", readline.PcItemDynamic(CompleteAccount)),
 	),
 	readline.PcItem("asset",
 		readline.PcItem("value",
@@ -48,8 +48,8 @@ var completer = readline.NewPrefixCompleter(
 		readline.PcItem("kind",
 			readline.PcItem("show", readline.PcItemDynamic(CompleteAssetKind)),
 			readline.PcItem("add"),
-			readline.PcItem("edit"),
-			readline.PcItem("del")),
+			readline.PcItem("edit", readline.PcItemDynamic(CompleteAssetKind)),
+			readline.PcItem("del", readline.PcItemDynamic(CompleteAssetKind))),
 	),
 )
 
@@ -136,12 +136,12 @@ func main() {
 		if err != nil {
 			err_str = err.Error()
 		}
-		// Avoid out of range errors
-		for len(line) < 10 {
-			line = append(line, "")
-		}
 		// Interpret
 		switch {
+		case len(line) == 0 && err_str != "EOF":
+			continue
+		case len(line) == 0 && err_str == "EOF":
+			os.Exit(0)
 		case line[0] == "exit" || err_str == "EOF":
 			os.Exit(0)
 		case line[0] == "account" && line[1] == "show":
@@ -156,10 +156,10 @@ func main() {
 			asset_kind_show(line[3:])
 		case line[0] == "asset" && line[1] == "kind" && line[2] == "add":
 			asset_kind_add(line[3:])
-		// case line[0] == "asset" && line[1] == "kind" && line[2] == "edit":
-		// 	asset_kind_edit(line[3:])
-		// case line[0] == "asset" && line[1] == "kind" && line[2] == "del":
-		// 	asset_kind_del(line[3:])
+		case line[0] == "asset" && line[1] == "kind" && line[2] == "edit":
+			asset_kind_edit(line[3:])
+		case line[0] == "asset" && line[1] == "kind" && line[2] == "del":
+			asset_kind_del(line[3:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}

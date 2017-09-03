@@ -62,7 +62,7 @@ func asset_kind_add(line []string) {
 	ak.Id = must_ask_user(AssetKindLine, Sprintf(Bold("Id: ")), "")
 	ak.Name = must_ask_user(AssetKindLine, Sprintf(Bold("Name: ")), "")
 	ak.Desc = must_ask_user(AssetKindLine, Sprintf(Bold("Desc: ")), "")
-	ak.DecimalPlaces = str.ToIntOr(must_ask_user(AssetKindLine, Sprintf(Bold("Decimal places: ")), ""), 0)
+	ak.DecimalPlaces = str.ToIntOr(must_ask_user(AssetKindLine, Sprintf(Bold("DecimalPlaces: ")), ""), 0)
 	err := ak.Save()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -96,6 +96,44 @@ func asset_kind_show(line []string) {
 		places := fmt.Sprintf("1/10^%d", ak.DecimalPlaces)
 		fmt.Printf("%10s | %-8s | %s\n", Bold(ak.Id), places, ak.Name)
 	}
+}
+
+func asset_kind_edit(line []string) {
+	ak := AssetKind{}
+	err := ak.Load(line[len(line)-1])
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	ak.Name = must_ask_user(AccountLine, Sprintf(Bold("Name: ")), ak.Name)
+	ak.Desc = must_ask_user(AccountLine, Sprintf(Bold("Desc: ")), ak.Desc)
+	tmp := fmt.Sprintf("%d", ak.DecimalPlaces)
+	ak.DecimalPlaces = str.ToIntOr(must_ask_user(AssetKindLine, Sprintf(Bold("DecimalPlaces: ")), tmp), ak.DecimalPlaces)
+	err = ak.Update()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func asset_kind_del(line []string) {
+	id := line[len(line)-1]
+	ak := AssetKind{}
+	conf := "DEL-" + id
+	input := ""
+	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
+	fmt.Scanln(&input)
+	if input != conf {
+		fmt.Println(Bold("Deletion avoided"))
+		return
+	}
+
+	err := ak.Del(id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(Bold("Deletion done"))
 }
 
 func asset_kind_prep() {
