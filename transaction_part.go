@@ -60,7 +60,7 @@ func (tp TransactionPart) Date() string {
 }
 
 func (tp TransactionPart) String() string {
-	return fmt.Sprintf("[%s] %s %s %s (%s) %s\n", tp.Id, tp.AccountId, tp.ValueToStr(), tp.AssetKindId, tp.Status, tp.Date())
+	return fmt.Sprintf("[%s] %s %s %s (%s) %s", tp.Id, tp.AccountId, tp.ValueToStr(), tp.AssetKindId, tp.Status, tp.Date())
 }
 
 func (tp TransactionPart) MultilineString() string {

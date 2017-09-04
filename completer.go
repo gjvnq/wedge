@@ -42,10 +42,7 @@ var Completer = readline.NewPrefixCompleter(
 		readline.PcItem("show", PcItemTransaction),
 		readline.PcItem("add"),
 		readline.PcItem("del", PcItemTransaction),
-		readline.PcItem("edit",
-			readline.PcItem("core", PcItemTransaction),
-			readline.PcItem("parts", PcItemTransaction),
-			readline.PcItem("items", PcItemTransaction))))
+		readline.PcItem("edit", PcItemTransaction)))
 
 const DATE_FMT = "2006-01-02-15:04:05-MST"
 const DATE_FMT_SPACES = "2006-01-02 15:04:05 MST"

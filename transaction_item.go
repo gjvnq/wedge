@@ -45,7 +45,7 @@ func (ti *TransactionItem) Load(id string) error {
 }
 
 func (ti TransactionItem) String() string {
-	return fmt.Sprintf("[%s] %s %s * %f = %s\n", ti.Id, ti.Name, ti.UnitCostToStr(), ti.Quantity, ti.TotalCostToStr())
+	return fmt.Sprintf("[%s] %s %s * %f = %s", ti.Id, ti.Name, ti.UnitCostToStr(), ti.Quantity, ti.TotalCostToStr())
 }
 
 func (ti TransactionItem) MultilineString() string {

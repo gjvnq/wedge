@@ -42,6 +42,24 @@ func (tr Transaction) MultilineString() string {
 	s += fmt.Sprintf("%s %s\n", Bold("  Name:"), tr.Name)
 	s += fmt.Sprintf("%s %s\n", Bold("  Desc:"), tr.Desc)
 	s += fmt.Sprintf("%s %s\n", Bold("Period:"), tr.RefTimeSpan.String())
+	s += fmt.Sprintf("------------------------------ %s -------------------------------\n", Bold("Transaction Parts"))
+	for _, tp := range tr.Parts {
+		tmp_num := fmt.Sprintf("%11.11s", tp.ValueToStr())
+		tmp_id := Bold(fmt.Sprintf("%3.3s", tp.AssetKindId))
+		if tp.Value > 0 {
+			tmp_num = Sprintf(Cyan(tmp_num))
+		} else {
+			tmp_num = Sprintf(Red(tmp_num))
+		}
+		s += fmt.Sprintf("%s %-14.14s %s %10s %s %s\n", Sprintf(Gray(tp.Id)), tp.AccountId, tp.Status, tp.Date(), tmp_num, tmp_id)
+	}
+	s += fmt.Sprintf("------------------------------ %s -------------------------------\n", Bold("Transaction Items"))
+	for _, ti := range tr.Items {
+		tmp_id := Bold(fmt.Sprintf("%3.3s", ti.AssetKindId))
+		tmp_num := fmt.Sprintf("%11.11s", ti.TotalCostToStr())
+		tmp_num = Sprintf(Cyan(tmp_num))
+		s += fmt.Sprintf("%s %-22.22s %4.1f %s %s\n", Sprintf(Gray(ti.Id)), ti.Name, ti.Quantity, tmp_num, tmp_id)
+	}
 	return s
 }
 
@@ -170,10 +188,6 @@ func (tr *Transaction) UpdateParts() error {
 		return err
 	}
 	// Now let us add them back
-	if len(tr.Parts) == 0 {
-		// Bit let us be lazy first :)
-		return nil
-	}
 	for _, tp := range tr.Parts {
 		err = tp.Save()
 		if err != nil {
@@ -191,10 +205,6 @@ func (tr *Transaction) UpdateItems() error {
 		return err
 	}
 	// Now let us add them back
-	if len(tr.Items) == 0 {
-		// Bit let us be lazy first :)
-		return nil
-	}
 	for _, ti := range tr.Items {
 		err = ti.Save()
 		if err != nil {
@@ -405,12 +415,20 @@ func transaction_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id`, `Name`, `RefStart`, `RefEnd` FROM `Transaction` WHERE `Id` = ? OR ? = '' LIMIT 64", spec, spec)
+
+	tr := NewTransaction()
+	err := tr.Load(spec)
+	if err == nil {
+		fmt.Printf(tr.MultilineString())
+		return
+	}
+
+	rows, err := DB.Query("SELECT `Id`, `Name`, `RefStart`, `RefEnd` FROM `Transaction` WHERE `Name` LIKE '%%"+spec+"%%' OR ? = '' LIMIT 64", spec)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%36s | %15.15s | %10s | %10s\n", "Id", "Name", "Start", "End")
-	fmt.Println("-------------------------------------+-----------------+------------+-----------")
+	// fmt.Printf("%36s | %15.15s | %10s | %10s\n", "Id", "Name", "Start", "End")
+	// fmt.Println("-------------------------------------+-----------------+------------+-----------")
 	// Read Stuff
 	for rows.Next() {
 		var id, name string
@@ -421,7 +439,9 @@ func transaction_show(line []string) {
 		}
 		start := time.Unix(start_int, 0)
 		end := time.Unix(end_int, 0)
-		fmt.Printf("%36s | %-15.15s | %10s | %10s\n", id, name, start.Format(DAY_FMT), end.Format(DAY_FMT))
+		tmp_id := Sprintf(Gray(id))
+		tmp_name := Sprintf(Bold(fmt.Sprintf("%-19.19s", name)))
+		fmt.Printf("%s %s %10s - %10s\n", tmp_id, tmp_name, start.Format(DAY_FMT), end.Format(DAY_FMT))
 	}
 }
 
