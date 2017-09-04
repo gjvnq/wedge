@@ -60,6 +60,17 @@ func (tp TransactionPart) Date() string {
 	return date
 }
 
+func (tp TransactionPart) ANSIString() string {
+	tmp_num := fmt.Sprintf("%11.11s", tp.ValueToStr())
+	tmp_id := Bold(fmt.Sprintf("%3.3s", tp.AssetKindId))
+	if tp.Value > 0 {
+		tmp_num = Sprintf(Cyan(tmp_num))
+	} else {
+		tmp_num = Sprintf(Red(tmp_num))
+	}
+	return fmt.Sprintf("%s %-14.14s %s %10s %s %s", Sprintf(Gray(tp.Id)), tp.AccountId, tp.Status, tp.Date(), tmp_num, tmp_id)
+}
+
 func (tp TransactionPart) String() string {
 	return fmt.Sprintf("[%s] %s %s %s (%s) %s", tp.Id, tp.AccountId, tp.ValueToStr(), tp.AssetKindId, tp.Status, tp.Date())
 }

@@ -49,6 +49,13 @@ func (ti TransactionItem) String() string {
 	return fmt.Sprintf("[%s] %s %s * %f = %s", ti.Id, ti.Name, ti.UnitCostToStr(), ti.Quantity, ti.TotalCostToStr())
 }
 
+func (ti TransactionItem) ANSIString() string {
+	tmp_id := Bold(fmt.Sprintf("%3.3s", ti.AssetKindId))
+	tmp_num := fmt.Sprintf("%11.11s", ti.TotalCostToStr())
+	tmp_num = Sprintf(Cyan(tmp_num))
+	return fmt.Sprintf("%s %-22.22s %4.1f %s %s", Sprintf(Gray(ti.Id)), ti.Name, ti.Quantity, tmp_num, tmp_id)
+}
+
 func (ti TransactionItem) MultilineString() string {
 	s := ""
 	s += fmt.Sprintf("%s %s\n", Bold("           Id:"), ti.Id)

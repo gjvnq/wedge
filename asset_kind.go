@@ -133,15 +133,20 @@ func fmt_decimal(raw, decimal_places int) string {
 	div := int(math.Pow10(decimal_places))
 	quotient := raw / div
 	remainder := raw - div*quotient
-	return fmt.Sprintf("%d.%d", quotient, remainder)
+	if remainder < 0 {
+		remainder *= -1
+	}
+	return fmt.Sprintf("%d.%0.*d", quotient, decimal_places, remainder)
 }
 
 func fmt_decimal_pad(raw, decimal_places, pad int) string {
 	div := int(math.Pow10(decimal_places))
 	quotient := raw / div
 	remainder := raw - div*quotient
-	pad_str := fmt.Sprintf("%d", pad)
-	return fmt.Sprintf("%%"+pad_str+"d.%d", quotient, remainder)
+	if remainder < 0 {
+		remainder *= -1
+	}
+	return fmt.Sprintf("%*d.%0.*d", pad, quotient, decimal_places, remainder)
 }
 
 func asset_kind_show(line []string) {

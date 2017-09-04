@@ -44,21 +44,11 @@ func (tr Transaction) MultilineString() string {
 	s += fmt.Sprintf("%s %s\n", Bold("Period:"), tr.RefTimeSpan.String())
 	s += fmt.Sprintf("------------------------------ %s -------------------------------\n", Bold("Transaction Parts"))
 	for _, tp := range tr.Parts {
-		tmp_num := fmt.Sprintf("%11.11s", tp.ValueToStr())
-		tmp_id := Bold(fmt.Sprintf("%3.3s", tp.AssetKindId))
-		if tp.Value > 0 {
-			tmp_num = Sprintf(Cyan(tmp_num))
-		} else {
-			tmp_num = Sprintf(Red(tmp_num))
-		}
-		s += fmt.Sprintf("%s %-14.14s %s %10s %s %s\n", Sprintf(Gray(tp.Id)), tp.AccountId, tp.Status, tp.Date(), tmp_num, tmp_id)
+		s += tp.ANSIString() + "\n"
 	}
 	s += fmt.Sprintf("------------------------------ %s -------------------------------\n", Bold("Transaction Items"))
 	for _, ti := range tr.Items {
-		tmp_id := Bold(fmt.Sprintf("%3.3s", ti.AssetKindId))
-		tmp_num := fmt.Sprintf("%11.11s", ti.TotalCostToStr())
-		tmp_num = Sprintf(Cyan(tmp_num))
-		s += fmt.Sprintf("%s %-22.22s %4.1f %s %s\n", Sprintf(Gray(ti.Id)), ti.Name, ti.Quantity, tmp_num, tmp_id)
+		s += ti.ANSIString() + "\n"
 	}
 	return s
 }
