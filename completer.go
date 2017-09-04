@@ -53,6 +53,11 @@ const DAY_FMT = "2006-01-02"
 const MONTH_FMT = "2006-01"
 const YEAR_FMT = "2006"
 
+func EndOfDay(input time.Time) time.Time {
+	y, m, d := input.Date()
+	return time.Date(y, m, d, 23, 59, 59, 0, time.Local)
+}
+
 func EndOfMonth(input time.Time) time.Time {
 	ans := input.AddDate(0, 1, 0)
 	for ans.Day() < 28 {
@@ -93,13 +98,13 @@ func IsDay(s string) bool {
 func IsAccount(s string) bool {
 	acc := Account{}
 	err := acc.Load(s)
-	return err == nil
+	return err == nil || s == ""
 }
 
 func IsAssetKind(s string) bool {
 	ak := AssetKind{}
 	err := ak.Load(s)
-	return err == nil
+	return err == nil || s == ""
 }
 
 func ToBool(s string) bool {

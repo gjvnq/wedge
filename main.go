@@ -129,8 +129,14 @@ func main() {
 			asset_value_edit(line[3:])
 		case line[0] == "asset" && line[1] == "value" && line[2] == "del":
 			asset_value_del(line[3:])
+		case line[0] == "transaction" && line[1] == "show":
+			transaction_show(line[2:])
 		case line[0] == "transaction" && line[1] == "add":
 			transaction_add(line[2:])
+		case line[0] == "transaction" && line[1] == "edit":
+			transaction_edit(line[2:])
+		case line[0] == "transaction" && line[1] == "del":
+			transaction_del(line[2:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}

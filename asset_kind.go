@@ -58,11 +58,14 @@ func (ak AssetKind) MultilineString() string {
 func parse_decimal(input string, decimal_places int) int {
 	input = strings.TrimSpace(input)
 	tmp := ""
+	mul := 1
 	places := 0
 	after_dot := false
 	for _, cur_rune := range input {
 		char := string(cur_rune)
 		switch {
+		case char == "-":
+			mul = -1
 		case char == ".":
 			after_dot = true
 		case after_dot == false:
@@ -78,7 +81,7 @@ func parse_decimal(input string, decimal_places int) int {
 		tmp += "0"
 		places++
 	}
-	return str.ToIntOr(tmp, 0)
+	return str.ToIntOr(tmp, 0) * mul
 }
 
 func full_decimal_parse(val_str string, asset_kind_id string) (int, error) {
@@ -90,6 +93,28 @@ func full_decimal_parse(val_str string, asset_kind_id string) (int, error) {
 	}
 	// Parse stuff
 	return parse_decimal(val_str, ak.DecimalPlaces), nil
+}
+
+func full_decimal_fmt(val_raw int, asset_kind_id string) (string, error) {
+	// Load AssetKind
+	ak := AssetKind{}
+	err := ak.Load(asset_kind_id)
+	if err != nil {
+		return "", err
+	}
+	// Parse stuff
+	return fmt_decimal(val_raw, ak.DecimalPlaces), nil
+}
+
+func full_decimal_fmt_pad(val_raw int, pad int, asset_kind_id string) (string, error) {
+	// Load AssetKind
+	ak := AssetKind{}
+	err := ak.Load(asset_kind_id)
+	if err != nil {
+		return "", err
+	}
+	// Parse stuff
+	return fmt_decimal_pad(val_raw, ak.DecimalPlaces, pad), nil
 }
 
 func fmt_decimal(raw, decimal_places int) string {

@@ -102,7 +102,7 @@ func asset_value_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR ? = ''", spec, spec, spec, spec)
+	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR ? = '' LIMIT 64", spec, spec, spec, spec)
 	if err != nil {
 		log.Fatal(err)
 	}

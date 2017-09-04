@@ -116,7 +116,7 @@ func account_add(line []string) {
 	acc := Account{}
 	acc.Id = ask_user(
 		LocalLine,
-		Sprintf(Bold("Id: ")),
+		Sprintf(Bold("      Id: ")),
 		"",
 		nil,
 		True)
@@ -128,13 +128,13 @@ func account_add(line []string) {
 		IsAccount)
 	acc.Name = ask_user(
 		LocalLine,
-		Sprintf(Bold("Name: ")),
+		Sprintf(Bold("    Name: ")),
 		"",
 		nil,
 		True)
 	acc.Desc = ask_user(
 		LocalLine,
-		Sprintf(Bold("Desc: ")),
+		Sprintf(Bold("    Desc: ")),
 		"",
 		nil,
 		True)
