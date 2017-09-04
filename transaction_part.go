@@ -177,6 +177,30 @@ func (tp *TransactionPart) Update() error {
 	return err
 }
 
+func (tp TransactionPart) Del(id string) error {
+	tp.Init()
+	_, err := DB.Exec("DELETE FROM `TransactionPart` WHERE `Id` = ?", id)
+	return err
+}
+
+func transaction_part_add(line []string) {
+}
+
+func transaction_part_edit(line []string) {
+}
+
+func transaction_part_show(line []string) {
+}
+
+func transaction_part_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	id := line[len(line)-1]
+	deleter(id, NewTransactionPart())
+}
+
 func CompleteTransactionPartFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]

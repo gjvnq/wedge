@@ -126,6 +126,30 @@ func (ti *TransactionItem) Update() error {
 	return err
 }
 
+func (ti TransactionItem) Del(id string) error {
+	ti.Init()
+	_, err := DB.Exec("DELETE FROM `TransactionItem` WHERE `Id` = ?", id)
+	return err
+}
+
+func transaction_item_add(line []string) {
+}
+
+func transaction_item_edit(line []string) {
+}
+
+func transaction_item_show(line []string) {
+}
+
+func transaction_item_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	id := line[len(line)-1]
+	deleter(id, NewTransactionItem())
+}
+
 func CompleteTransactionItemFunc(prefix string) []string {
 	tmp := strings.Split(prefix, " ")
 	spec := tmp[len(tmp)-1]

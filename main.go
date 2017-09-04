@@ -137,6 +137,22 @@ func main() {
 			transaction_edit(line[2:])
 		case line[0] == "transaction" && line[1] == "del":
 			transaction_del(line[2:])
+		case line[0] == "transaction" && line[1] == "part" && line[2] == "show":
+			transaction_part_show(line[3:])
+		case line[0] == "transaction" && line[1] == "part" && line[2] == "add":
+			transaction_part_add(line[3:])
+		case line[0] == "transaction" && line[1] == "part" && line[2] == "edit":
+			transaction_part_edit(line[3:])
+		case line[0] == "transaction" && line[1] == "part" && line[2] == "del":
+			transaction_part_del(line[3:])
+		case line[0] == "transaction" && line[1] == "item" && line[2] == "show":
+			transaction_item_show(line[3:])
+		case line[0] == "transaction" && line[1] == "item" && line[2] == "add":
+			transaction_item_add(line[3:])
+		case line[0] == "transaction" && line[1] == "item" && line[2] == "edit":
+			transaction_item_edit(line[3:])
+		case line[0] == "transaction" && line[1] == "item" && line[2] == "del":
+			asset_value_del(line[3:])
 		default:
 			fmt.Printf("Unknown command: %+v Additional error: %+v\n", line, err)
 		}
