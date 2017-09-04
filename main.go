@@ -80,7 +80,11 @@ func main() {
 
 	// Open database
 	fmt.Println("Opening database...")
-	DB, err = sql.Open("sqlite3", "wedge.db")
+	filename := "wedge.db"
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	}
+	DB, err = sql.Open("sqlite3", filename)
 	if err != nil {
 		log.Fatal(err)
 	}
