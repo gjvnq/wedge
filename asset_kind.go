@@ -107,19 +107,6 @@ func fmt_decimal_pad(raw, decimal_places, pad int) string {
 	return fmt.Sprintf("%%"+pad_str+"d.%d", quotient, remainder)
 }
 
-func asset_kind_add(line []string) {
-	ak := AssetKind{}
-	// Ask user
-	ak.Id = must_ask_user(LocalLine, Sprintf(Bold("Id: ")), "")
-	ak.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), "")
-	ak.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), "")
-	ak.DecimalPlaces = str.ToIntOr(must_ask_user(LocalLine, Sprintf(Bold("DecimalPlaces: ")), ""), 0)
-	err := ak.Save()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-}
-
 func asset_kind_show(line []string) {
 	spec := ""
 	if len(line) > 0 {
@@ -152,6 +139,40 @@ func asset_kind_show(line []string) {
 	}
 }
 
+func asset_kind_add(line []string) {
+	ak := AssetKind{}
+	// Ask user
+	ak.Id = ask_user(
+		LocalLine,
+		Sprintf(Bold("  Id: ")),
+		"",
+		nil,
+		True)
+	ak.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("Name: ")),
+		"",
+		nil,
+		True)
+	ak.Desc = ask_user(
+		LocalLine,
+		Sprintf(Bold("Desc: ")),
+		"",
+		nil,
+		True)
+	ak.DecimalPlaces = str.ToIntOr(ask_user(
+		LocalLine,
+		Sprintf(Bold("DecimalPlaces: ")),
+		"",
+		nil,
+		IsInt), 0)
+
+	err := ak.Save()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
 func asset_kind_edit(line []string) {
 	if len(line) == 0 {
 		fmt.Println(Red("No id specified"))
@@ -164,10 +185,26 @@ func asset_kind_edit(line []string) {
 		return
 	}
 
-	ak.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), ak.Name)
-	ak.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), ak.Desc)
-	tmp := fmt.Sprintf("%d", ak.DecimalPlaces)
-	ak.DecimalPlaces = str.ToIntOr(must_ask_user(LocalLine, Sprintf(Bold("DecimalPlaces: ")), tmp), ak.DecimalPlaces)
+	fmt.Println(Bold("   Id:"), ak.Id, Gray(" (non editable)"))
+	ak.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("Name: ")),
+		ak.Name,
+		nil,
+		True)
+	ak.Desc = ask_user(
+		LocalLine,
+		Sprintf(Bold("Desc: ")),
+		ak.Desc,
+		nil,
+		True)
+	ak.DecimalPlaces = str.ToIntOr(ask_user(
+		LocalLine,
+		Sprintf(Bold("DecimalPlaces: ")),
+		Sprintf(ak.DecimalPlaces),
+		nil,
+		IsInt), 0)
+
 	err = ak.Update()
 	if err != nil {
 		fmt.Println(err.Error())

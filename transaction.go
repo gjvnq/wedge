@@ -353,19 +353,19 @@ func transaction_add(line []string) {
 	var err error
 	tr := NewTransaction()
 	// Ask user for basic info
-	tr.Name = super_ask_user(
+	tr.Name = ask_user(
 		LocalLine,
 		Sprintf(Bold("  Name: ")),
 		"",
 		nil,
 		True)
-	tr.Desc = super_ask_user(
+	tr.Desc = ask_user(
 		LocalLine,
 		Sprintf(Bold("  Desc: ")),
 		"",
 		nil,
 		True)
-	period := super_ask_user(
+	period := ask_user(
 		LocalLine,
 		Sprintf(Bold("Period: ")),
 		"",
@@ -383,44 +383,49 @@ func transaction_add(line []string) {
 	}
 	// Ask user for transaction parts
 	for {
-		flag := ToBool(must_ask_user(LocalLine, Sprintf(Bold("Add transaction part? [y/n] ")), ""))
+		flag := ToBool(ask_user(
+			LocalLine,
+			Sprintf(Bold("Add transaction part? [y/n] ")),
+			"",
+			nil,
+			IsBool))
 		if flag != true {
 			break
 		}
 		// Ask transaction part details
 		tp := NewTransactionPart()
 		tp.TransactionId = tr.Id
-		tp.AccountId = super_ask_user(
+		tp.AccountId = ask_user(
 			LocalLine,
 			Sprintf(Bold("AccountId: ")),
 			"",
 			CompleterAccount,
 			IsAccount)
-		tp.AssetKindId = super_ask_user(
+		tp.AssetKindId = ask_user(
 			LocalLine,
 			Sprintf(Bold("Asset: ")),
 			"",
 			CompleterAssetKind,
 			IsAssetKind)
-		val_str := super_ask_user(
+		val_str := ask_user(
 			LocalLine,
 			Sprintf(Bold("Value: ")),
 			"",
 			nil,
 			IsFloat)
-		schdul := super_ask_user(
+		schdul := ask_user(
 			LocalLine,
 			Sprintf(Bold("Scheduled for: ")),
 			"",
 			nil,
 			IsDay)
-		actual := super_ask_user(
+		actual := ask_user(
 			LocalLine,
 			Sprintf(Bold("Actual date: ")),
 			schdul,
 			nil,
 			IsDay)
-		status := super_ask_user(
+		status := ask_user(
 			LocalLine,
 			Sprintf(Bold("Status: ")),
 			"",
@@ -436,39 +441,44 @@ func transaction_add(line []string) {
 	}
 	// Ask user for transaction itens
 	for {
-		flag := str.ToBool(must_ask_user(LocalLine, Sprintf(Bold("Add transaction item? [y/n] ")), ""))
+		flag := ToBool(ask_user(
+			LocalLine,
+			Sprintf(Bold("Add transaction item? [y/n] ")),
+			"",
+			nil,
+			IsBool))
 		if flag != true {
 			break
 		}
 		// Ask transaction part details
 		ti := NewTransactionItem()
 		ti.TransactionId = tr.Id
-		ti.Name = super_ask_user(
+		ti.Name = ask_user(
 			LocalLine,
 			Sprintf(Bold("Name: ")),
 			"",
 			nil,
 			True)
-		ti.AssetKindId = super_ask_user(
+		ti.AssetKindId = ask_user(
 			LocalLine,
 			Sprintf(Bold("AssetId: ")),
 			"",
 			CompleterAssetKind,
 			IsAssetKind)
-		tot_str := super_ask_user(
+		tot_str := ask_user(
 			LocalLine,
 			Sprintf(Bold("TotalCost: ")),
 			"",
 			nil,
 			IsFloat)
-		ti.Quantity = str.ToFloatOr(super_ask_user(
+		ti.Quantity = str.ToFloatOr(ask_user(
 			LocalLine,
 			Sprintf(Bold("Quantity: ")),
 			"",
 			nil,
 			IsFloat), 0)
 		guess := fmt.Sprintf("%f", str.ToFloatOr(tot_str, 0)/ti.Quantity)
-		uni_str := super_ask_user(
+		uni_str := ask_user(
 			LocalLine,
 			Sprintf(Bold("UnitCost: ")),
 			guess,

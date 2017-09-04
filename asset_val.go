@@ -137,12 +137,36 @@ func asset_value_add(line []string) {
 	var err error
 	av := AssetValue{}
 	// Ask user
-	set_completer(LocalLine, CompleterAssetKind)
-	av.AssetId = must_ask_user(LocalLine, Sprintf(Bold("AssetId: ")), "")
-	av.RefId = must_ask_user(LocalLine, Sprintf(Bold("RefId: ")), "")
-	set_completer(LocalLine, nil)
-	val_str := must_ask_user(LocalLine, Sprintf(Bold("Value: ")), "")
-	date_str := must_ask_user(LocalLine, Sprintf(Bold("Date: ")), "")
+	av.AssetId = ask_user(
+		LocalLine,
+		Sprintf(Bold("AssetId: ")),
+		"",
+		CompleterAssetKind,
+		IsAssetKind)
+	av.RefId = ask_user(
+		LocalLine,
+		Sprintf(Bold("  RefId: ")),
+		"",
+		CompleterAssetKind,
+		IsAssetKind)
+	val_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("  Value: ")),
+		"",
+		CompleterAssetKind,
+		IsFloat)
+	date_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("   Date: ")),
+		"",
+		nil,
+		IsDay)
+	av.Notes = ask_user(
+		LocalLine,
+		Sprintf(Bold("  Notes: ")),
+		"",
+		nil,
+		True)
 	// Parse stuff
 	av.StrToValue(val_str)
 	av.Date, err = time.Parse(DAY_FMT, date_str)
@@ -173,9 +197,21 @@ func asset_value_edit(line []string) {
 	fmt.Println(Bold("AssetId:"), av.AssetId, Gray(" (non editable)"))
 	fmt.Println(Bold("  RefId:"), av.RefId, Gray(" (non editable)"))
 	fmt.Println(Bold("   Date:"), av.Date, Gray(" (non editable)"))
-	tmp := must_ask_user(LocalLine, Sprintf(Bold("  Value: ")), av.ValueToStr())
-	av.Notes = must_ask_user(LocalLine, Sprintf(Bold("  Notes: ")), av.Notes)
-	av.StrToValue(tmp)
+
+	val_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("  Value: ")),
+		"",
+		CompleterAssetKind,
+		IsFloat)
+	av.Notes = ask_user(
+		LocalLine,
+		Sprintf(Bold("  Notes: ")),
+		"",
+		nil,
+		True)
+
+	av.StrToValue(val_str)
 	err = av.Update()
 	if err != nil {
 		fmt.Println(err.Error())

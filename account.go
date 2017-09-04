@@ -114,12 +114,30 @@ func account_show_print_children(level int, parent Account, printed map[string]b
 
 func account_add(line []string) {
 	acc := Account{}
-	acc.Id = must_ask_user(LocalLine, Sprintf(Bold("Id: ")), "")
-	set_completer(LocalLine, CompleterAccount)
-	acc.ParentId = must_ask_user(LocalLine, Sprintf(Bold("ParentId: ")), "")
-	set_completer(LocalLine, nil)
-	acc.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), "")
-	acc.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), "")
+	acc.Id = ask_user(
+		LocalLine,
+		Sprintf(Bold("Id: ")),
+		"",
+		nil,
+		True)
+	acc.ParentId = ask_user(
+		LocalLine,
+		Sprintf(Bold("ParentId: ")),
+		"",
+		CompleterAccount,
+		IsAccount)
+	acc.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("Name: ")),
+		"",
+		nil,
+		True)
+	acc.Desc = ask_user(
+		LocalLine,
+		Sprintf(Bold("Desc: ")),
+		"",
+		nil,
+		True)
 	err := acc.Save()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -138,11 +156,25 @@ func account_edit(line []string) {
 		return
 	}
 
-	LocalLine.Config.AutoComplete = CompleterAccount
-	acc.ParentId = must_ask_user(LocalLine, Sprintf(Bold("ParentId: ")), acc.ParentId)
-	LocalLine.Config.AutoComplete = nil
-	acc.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), acc.Name)
-	acc.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), acc.Desc)
+	fmt.Println(Bold("      Id:"), acc.Id, Gray(" (non editable)"))
+	acc.ParentId = ask_user(
+		LocalLine,
+		Sprintf(Bold("ParentId: ")),
+		acc.ParentId,
+		CompleterAccount,
+		IsAccount)
+	acc.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("    Name: ")),
+		acc.Name,
+		nil,
+		True)
+	acc.Desc = ask_user(
+		LocalLine,
+		Sprintf(Bold("    Desc: ")),
+		acc.Desc,
+		nil,
+		True)
 	err = acc.Update()
 	if err != nil {
 		fmt.Println(err.Error())

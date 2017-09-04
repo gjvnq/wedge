@@ -71,25 +71,17 @@ func EndOfYear(input time.Time) time.Time {
 	return time.Date(y, m, d, 23, 59, 59, 0, time.Local)
 }
 
-func ask_user(line *readline.Instance, prompt string, what string) (string, error) {
-	line.SetPrompt(prompt)
-	return line.ReadlineWithDefault(what)
-}
-
-func must_ask_user(line *readline.Instance, prompt string, what string) string {
-	line.SetPrompt(prompt)
-	s, err := line.ReadlineWithDefault(what)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.TrimSpace(s)
-}
-
 func True(s string) bool { return true }
 
 func IsFloat(s string) bool {
 	val := 3.14
 	n, err := fmt.Sscanf(s, "%f", &val)
+	return n == 1 && err == nil
+}
+
+func IsInt(s string) bool {
+	val := 3
+	n, err := fmt.Sscanf(s, "%d", &val)
 	return n == 1 && err == nil
 }
 
@@ -115,7 +107,12 @@ func ToBool(s string) bool {
 	return s == "true" || s == "yes" || s == "on" || s == "1" || s == "y"
 }
 
-func super_ask_user(line *readline.Instance, prompt string, what string, completer *readline.PrefixCompleter, validator func(string) bool) string {
+func IsBool(s string) bool {
+	s = strings.ToLower(s)
+	return s == "true" || s == "yes" || s == "on" || s == "1" || s == "y" || s == "false" || s == "no" || s == "off" || s == "0" || s == "n"
+}
+
+func ask_user(line *readline.Instance, prompt string, what string, completer *readline.PrefixCompleter, validator func(string) bool) string {
 	for {
 		line.SetPrompt(prompt)
 		set_completer(line, completer)
