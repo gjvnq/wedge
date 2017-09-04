@@ -427,8 +427,6 @@ func transaction_show(line []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// fmt.Printf("%36s | %15.15s | %10s | %10s\n", "Id", "Name", "Start", "End")
-	// fmt.Println("-------------------------------------+-----------------+------------+-----------")
 	// Read Stuff
 	for rows.Next() {
 		var id, name string

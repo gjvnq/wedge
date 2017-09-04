@@ -13,20 +13,28 @@ var PcItemAccount = readline.PcItemDynamic(CompleteAccountFunc)
 var PcItemAssetValue = readline.PcItemDynamic(CompleteAssetValueFunc)
 var PcItemAssetKind = readline.PcItemDynamic(CompleteAssetKindFunc)
 var PcItemTransaction = readline.PcItemDynamic(CompleteTransactionFunc)
+var PcItemTransactionPart = readline.PcItemDynamic(CompleteTransactionPartFunc)
+var PcItemTransactionItem = readline.PcItemDynamic(CompleteTransactionItemFunc)
 var PcItemTransactionStatus = readline.PcItemDynamic(CompleteTransactionStatusFunc)
 var CompleterAccount = readline.NewPrefixCompleter(PcItemAccount)
 var CompleterAssetValue = readline.NewPrefixCompleter(PcItemAssetValue)
 var CompleterAssetKind = readline.NewPrefixCompleter(PcItemAssetKind)
 var CompleterTransaction = readline.NewPrefixCompleter(PcItemTransaction)
+var CompleterTransactionPart = readline.NewPrefixCompleter(PcItemTransactionPart)
+var CompleterTransactionItem = readline.NewPrefixCompleter(PcItemTransactionItem)
 var CompleterTransactionStatus = readline.NewPrefixCompleter(PcItemTransactionStatus)
 var CompleterEmpty = readline.NewPrefixCompleter()
 var Completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
+	readline.PcItem("timeline",
+		readline.PcItem("summary"),
+		readline.PcItem("plot")),
 	readline.PcItem("account",
 		readline.PcItem("show", PcItemAccount),
 		readline.PcItem("add"),
 		readline.PcItem("edit", PcItemAccount),
-		readline.PcItem("del", PcItemAccount)),
+		readline.PcItem("del", PcItemAccount),
+		readline.PcItem("balance", PcItemAccount)),
 	readline.PcItem("asset",
 		readline.PcItem("value",
 			readline.PcItem("show", PcItemAssetValue),
@@ -42,7 +50,17 @@ var Completer = readline.NewPrefixCompleter(
 		readline.PcItem("show", PcItemTransaction),
 		readline.PcItem("add"),
 		readline.PcItem("del", PcItemTransaction),
-		readline.PcItem("edit", PcItemTransaction)))
+		readline.PcItem("edit", PcItemTransaction),
+		readline.PcItem("part",
+			readline.PcItem("show", PcItemTransactionPart),
+			readline.PcItem("add"),
+			readline.PcItem("del", PcItemTransactionPart),
+			readline.PcItem("edit", PcItemTransactionPart)),
+		readline.PcItem("item",
+			readline.PcItem("show", PcItemTransactionItem),
+			readline.PcItem("add"),
+			readline.PcItem("del", PcItemTransactionItem),
+			readline.PcItem("edit", PcItemTransactionItem))))
 
 const DATE_FMT = "2006-01-02-15:04:05-MST"
 const DATE_FMT_SPACES = "2006-01-02 15:04:05 MST"

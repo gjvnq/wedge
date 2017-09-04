@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	. "github.com/logrusorgru/aurora"
 	"github.com/satori/go.uuid"
@@ -116,4 +117,25 @@ func (ti *TransactionItem) Update() error {
 		ti.TotalCost,
 		ti.Id)
 	return err
+}
+
+func CompleteTransactionItemFunc(prefix string) []string {
+	tmp := strings.Split(prefix, " ")
+	spec := tmp[len(tmp)-1]
+	rows, err := DB.Query("SELECT `Id` FROM `TransactionItem` WHERE `Id` LIKE '"+spec+"%%' OR ? = '' LIMIT 64", spec)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Read accounts
+	found := make([]string, 0)
+	defer rows.Close()
+	for rows.Next() {
+		s := ""
+		err := rows.Scan(&s)
+		if err != nil {
+			log.Fatal(err)
+		}
+		found = append(found, s)
+	}
+	return found
 }
