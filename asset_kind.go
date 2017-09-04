@@ -31,6 +31,11 @@ func (ak *AssetKind) Init() {
 	}
 }
 
+func (ak AssetKind) ANSIString() string {
+	places := fmt.Sprintf("1/10^%-2d", ak.DecimalPlaces)
+	return fmt.Sprintf("%-10.10s %8s %s", Bold(ak.Id), places, ak.Name)
+}
+
 func (ak AssetKind) Save() error {
 	if len(ak.Id) <= 0 {
 		return errors.New("All asset kinds must have a non empty id")
@@ -154,12 +159,19 @@ func asset_kind_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id`, `Name`, `Desc`, `DecimalPlaces` FROM `AssetKind` WHERE `Id` = ? OR `Name` LIKE '%%"+spec+"%%' OR ? = ''", spec, spec)
+
+	ak := NewAssetKind()
+	err := ak.Load(spec)
+	if err == nil {
+		fmt.Printf(ak.MultilineString())
+		return
+	}
+
+	rows, err := DB.Query("SELECT `Id`, `Name`, `Desc`, `DecimalPlaces` FROM `AssetKind` WHERE `Name` LIKE '%%"+spec+"%%' OR ? = ''", spec, spec)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Read accounts
-	aks := make([]AssetKind, 0)
 	defer rows.Close()
 	for rows.Next() {
 		ak := AssetKind{}
@@ -167,17 +179,7 @@ func asset_kind_show(line []string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		aks = append(aks, ak)
-	}
-	if len(aks) == 1 {
-		fmt.Printf(aks[0].MultilineString())
-		return
-	}
-	fmt.Printf("%10s | %8s | %s\n", Bold("Id"), "Min Frac", "Name")
-	fmt.Println("-----------+----------+---------------------------------------------------------")
-	for _, ak := range aks {
-		places := fmt.Sprintf("1/10^%d", ak.DecimalPlaces)
-		fmt.Printf("%10s | %-8s | %s\n", Bold(ak.Id), places, ak.Name)
+		fmt.Printf("%s\n", ak.ANSIString())
 	}
 }
 

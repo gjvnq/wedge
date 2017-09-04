@@ -28,6 +28,10 @@ func NewAssetValue() *AssetValue {
 func (av *AssetValue) Init() {
 }
 
+func (av AssetValue) ANSIString() string {
+	return fmt.Sprintf("%d %s = %s %s %s", 1, Bold(av.AssetId), Cyan(av.ValueToStr()), Bold(av.RefId), av.Date.Format(DATE_FMT_SPACES))
+}
+
 func (av AssetValue) TypeName() string {
 	return "AssetValue"
 }
@@ -81,7 +85,7 @@ func (av AssetValue) ValueToStr() string {
 	return fmt_decimal(av.Value, ak.DecimalPlaces)
 }
 
-func (av AssetValue) StrToValue(val_str string) {
+func (av *AssetValue) StrToValue(val_str string) {
 	var err error
 	av.Value, err = full_decimal_parse(val_str, av.RefId)
 	if err != nil {
@@ -111,12 +115,19 @@ func asset_value_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` = ? OR `AssetId` = ? OR ? = '' LIMIT 64", spec, spec, spec, spec)
+
+	av := NewAssetValue()
+	err := av.Load(spec)
+	if err == nil {
+		fmt.Printf(av.MultilineString())
+		return
+	}
+
+	rows, err := DB.Query("SELECT `Id` FROM `AssetValue` WHERE `Id` LIKE '%%"+spec+"%%' OR `AssetId` = ? OR ? = '' LIMIT 64", spec, spec, spec)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Read accounts
-	avs := make([]AssetValue, 0)
 	defer rows.Close()
 	for rows.Next() {
 		av := AssetValue{}
@@ -129,16 +140,7 @@ func asset_value_show(line []string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		avs = append(avs, av)
-	}
-	if len(avs) == 1 {
-		fmt.Printf(avs[0].MultilineString())
-		return
-	}
-	fmt.Printf("%10s | %10s | %10s | %s\n", "AssetId", "RefId", "Value", "Date")
-	fmt.Println("-----------+------------+------------+------------------------------------------")
-	for _, av := range avs {
-		fmt.Printf("%10s | %10s | %10s | %s\n", av.AssetId, av.RefId, av.ValueToStr(), av.Date.Format(DAY_FMT))
+		fmt.Println(av.ANSIString())
 	}
 }
 
@@ -210,7 +212,7 @@ func asset_value_edit(line []string) {
 	val_str := ask_user(
 		LocalLine,
 		Sprintf(Bold("  Value: ")),
-		"",
+		av.ValueToStr(),
 		CompleterAssetKind,
 		IsFloat)
 	av.Notes = ask_user(

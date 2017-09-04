@@ -269,19 +269,19 @@ func transaction_add(line []string) {
 		tp.TransactionId = tr.Id
 		tp.AccountId = ask_user(
 			LocalLine,
-			Sprintf(Bold("   AccountId: ")),
+			Sprintf(Bold("    AccountId: ")),
 			"",
 			CompleterAccount,
 			IsAccount)
 		tp.AssetKindId = ask_user(
 			LocalLine,
-			Sprintf(Bold("       Asset: ")),
+			Sprintf(Bold("        Asset: ")),
 			"",
 			CompleterAssetKind,
 			IsAssetKind)
 		val_str := ask_user(
 			LocalLine,
-			Sprintf(Bold("       Value: ")),
+			Sprintf(Bold("        Value: ")),
 			"",
 			nil,
 			IsFloat)
@@ -293,13 +293,13 @@ func transaction_add(line []string) {
 			IsDay)
 		actual := ask_user(
 			LocalLine,
-			Sprintf(Bold(" Actual date: ")),
+			Sprintf(Bold("  Actual date: ")),
 			schdul,
 			nil,
 			IsDay)
 		status := ask_user(
 			LocalLine,
-			Sprintf(Bold("      Status: ")),
+			Sprintf(Bold("       Status: ")),
 			"",
 			CompleterTransactionStatus,
 			func(s string) bool {

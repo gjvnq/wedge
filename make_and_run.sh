@@ -1,2 +1,2 @@
 #!/bin/bash
-goimports -w . && go fmt && go build && ./wedge
+goimports -w . && go fmt && go build && ./wedge wedge.db
