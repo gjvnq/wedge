@@ -105,3 +105,15 @@ func (ti *TransactionItem) Save() error {
 		ti.TotalCost)
 	return err
 }
+
+func (ti *TransactionItem) Update() error {
+	ti.Init()
+	_, err := DB.Exec("UPDATE `TransactionItem` SET `Name` = ?, `UnitCost` = ?, `AssetKindId` = ?, `Quantity` = ?, `TotalCost` = ? WHERE `Id` = ?",
+		ti.Name,
+		ti.UnitCost,
+		ti.AssetKindId,
+		ti.Quantity,
+		ti.TotalCost,
+		ti.Id)
+	return err
+}

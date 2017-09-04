@@ -26,7 +26,7 @@ type Transaction struct {
 	Desc        string
 	RefTimeSpan TimePeriod
 	Parts       []TransactionPart
-	Itens       []TransactionItem
+	Items       []TransactionItem
 	Tags        map[string]bool
 }
 
@@ -52,8 +52,8 @@ func (tr *Transaction) Init() {
 	if tr.Parts == nil {
 		tr.Parts = make([]TransactionPart, 0)
 	}
-	if tr.Itens == nil {
-		tr.Itens = make([]TransactionItem, 0)
+	if tr.Items == nil {
+		tr.Items = make([]TransactionItem, 0)
 	}
 	if tr.Tags == nil {
 		tr.Tags = make(map[string]bool)
@@ -62,7 +62,7 @@ func (tr *Transaction) Init() {
 
 func (tr *Transaction) Load(id string) error {
 	var start, end int64
-
+	// Load basic info
 	tr.Init()
 	err := DB.QueryRow("SELECT `Id`, `Name`, `Desc`, `RefStart`, `RefEnd` FROM `Transaction` WHERE `Id` = ?", id).
 		Scan(&tr.Id, &tr.Name, &tr.Desc, &start, &end)
@@ -70,6 +70,58 @@ func (tr *Transaction) Load(id string) error {
 	tr.RefTimeSpan.End = time.Unix(end, 0)
 	if err != nil {
 		return err
+	}
+	err = tr.load_parts()
+	if err != nil {
+		return err
+	}
+	err = tr.load_items()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tr *Transaction) load_parts() error {
+	rows, err := DB.Query("SELECT `Id` FROM `TransactionPart` WHERE `TransactionId` = ?", tr.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		tp := TransactionPart{}
+		id := ""
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = tp.Load(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tr.Parts = append(tr.Parts, tp)
+	}
+	return nil
+}
+
+func (tr *Transaction) load_items() error {
+	rows, err := DB.Query("SELECT `Id` FROM `TransactionItem` WHERE `TransactionId` = ?", tr.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		ti := TransactionItem{}
+		id := ""
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ti.Load(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tr.Items = append(tr.Items, ti)
 	}
 	return nil
 }
@@ -103,7 +155,7 @@ func (tr *Transaction) Update() error {
 	if err != nil {
 		return err
 	}
-	err = tr.UpdateItens()
+	err = tr.UpdateItems()
 	if err != nil {
 		return err
 	}
@@ -131,7 +183,7 @@ func (tr *Transaction) UpdateParts() error {
 	return nil
 }
 
-func (tr *Transaction) UpdateItens() error {
+func (tr *Transaction) UpdateItems() error {
 	tr.Init()
 	// First, delete all
 	_, err := DB.Exec("DELETE FROM `TransactionItem` WHERE `TransactionId` = ?", tr.Id)
@@ -139,11 +191,11 @@ func (tr *Transaction) UpdateItens() error {
 		return err
 	}
 	// Now let us add them back
-	if len(tr.Itens) == 0 {
+	if len(tr.Items) == 0 {
 		// Bit let us be lazy first :)
 		return nil
 	}
-	for _, ti := range tr.Itens {
+	for _, ti := range tr.Items {
 		err = ti.Save()
 		if err != nil {
 			return err
@@ -242,7 +294,7 @@ func transaction_add(line []string) {
 		tp.SetStatus(status)
 		tr.Parts = append(tr.Parts, *tp)
 	}
-	// Ask user for transaction itens
+	// Ask user for transaction items
 	for {
 		flag := ToBool(ask_user(
 			LocalLine,
@@ -289,7 +341,7 @@ func transaction_add(line []string) {
 			IsFloat)
 		ti.SetTotalCost(tot_str)
 		ti.SetUnitCost(uni_str)
-		tr.Itens = append(tr.Itens, *ti)
+		tr.Items = append(tr.Items, *ti)
 	}
 	// Save
 	err = tr.Save()
@@ -353,40 +405,23 @@ func transaction_show(line []string) {
 	if len(line) > 0 {
 		spec = line[0]
 	}
-	rows, err := DB.Query("SELECT `Id` FROM `Transaction` WHERE `Id` = ? OR ? = '' LIMIT 64", spec, spec)
+	rows, err := DB.Query("SELECT `Id`, `Name`, `RefStart`, `RefEnd` FROM `Transaction` WHERE `Id` = ? OR ? = '' LIMIT 64", spec, spec)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Read raw data
-	tmp := make([]string, 0)
-	defer rows.Close()
-	for rows.Next() {
-		id := ""
-		err := rows.Scan(&id)
-		if err != nil {
-			log.Fatal(err)
-		}
-		tmp = append(tmp, id)
-	}
-	rows.Close()
-	// Load data
-	trs := make([]Transaction, 0)
-	for _, id := range tmp {
-		tr := Transaction{}
-		err := tr.Load(id)
-		if err != nil {
-			log.Fatal(err)
-		}
-		trs = append(trs, tr)
-	}
-	if len(trs) == 1 {
-		fmt.Printf(trs[0].MultilineString())
-		return
-	}
 	fmt.Printf("%36s | %15.15s | %10s | %10s\n", "Id", "Name", "Start", "End")
 	fmt.Println("-------------------------------------+-----------------+------------+-----------")
-	for _, tr := range trs {
-		fmt.Printf("%36s | %-15.15s | %10s | %10s\n", tr.Id, tr.Name, tr.RefTimeSpan.Start.Format(DAY_FMT), tr.RefTimeSpan.End.Format(DAY_FMT))
+	// Read Stuff
+	for rows.Next() {
+		var id, name string
+		var start_int, end_int int64
+		err := rows.Scan(&id, &name, &start_int, &end_int)
+		if err != nil {
+			log.Fatal(err)
+		}
+		start := time.Unix(start_int, 0)
+		end := time.Unix(end_int, 0)
+		fmt.Printf("%36s | %-15.15s | %10s | %10s\n", id, name, start.Format(DAY_FMT), end.Format(DAY_FMT))
 	}
 }
 
