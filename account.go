@@ -156,7 +156,7 @@ func account_edit(line []string) {
 		return
 	}
 
-	fmt.Println(Bold("      Id:"), acc.Id, Gray(" (non editable)"))
+	fmt.Println(Bold("      Id:"), acc.Id, Gray("(non editable)"))
 	acc.ParentId = ask_user(
 		LocalLine,
 		Sprintf(Bold("ParentId: ")),
