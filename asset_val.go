@@ -19,6 +19,15 @@ type AssetValue struct {
 	Notes   string
 }
 
+func NewAssetValue() *AssetValue {
+	av := AssetValue{}
+	av.Init()
+	return &av
+}
+
+func (av *AssetValue) Init() {
+}
+
 func (av AssetValue) TypeName() string {
 	return "AssetValue"
 }
@@ -224,22 +233,7 @@ func asset_value_del(line []string) {
 		return
 	}
 	id := line[len(line)-1]
-	av := AssetValue{}
-	conf := "DEL-" + id
-	input := ""
-	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
-	fmt.Scanln(&input)
-	if input != conf {
-		fmt.Println(Bold("Deletion avoided"))
-		return
-	}
-
-	err := av.Del(id)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	fmt.Println(Bold("Deletion done"))
+	deleter(id, NewAssetValue())
 }
 
 func CompleteAssetValueFunc(prefix string) []string {

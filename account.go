@@ -17,6 +17,18 @@ type Account struct {
 	Tags     map[string]bool
 }
 
+func NewAccount() *Account {
+	acc := Account{}
+	acc.Init()
+	return &acc
+}
+
+func (acc *Account) Init() {
+	if acc.Tags == nil {
+		acc.Tags = make(map[string]bool)
+	}
+}
+
 func (acc Account) Save() error {
 	if len(acc.Id) <= 0 {
 		return errors.New("All accounts must have a non empty id")
@@ -187,22 +199,7 @@ func account_del(line []string) {
 		return
 	}
 	id := line[len(line)-1]
-	acc := Account{}
-	conf := "DEL-" + id
-	input := ""
-	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
-	fmt.Scanln(&input)
-	if input != conf {
-		fmt.Println(Bold("Deletion avoided"))
-		return
-	}
-
-	err := acc.Del(id)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	fmt.Println(Bold("Deletion done"))
+	deleter(id, NewAccount())
 }
 
 func CompleteAccountFunc(prefix string) []string {

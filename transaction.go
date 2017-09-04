@@ -144,6 +144,23 @@ func (tr *Transaction) load_items() error {
 	return nil
 }
 
+func (tr Transaction) Del(id string) error {
+	tr.Init()
+	_, err := DB.Exec("DELETE FROM `Transaction` WHERE `Id` = ?", id)
+	if err != nil {
+		return err
+	}
+	_, err = DB.Exec("DELETE FROM `TransactionPart` WHERE `TransactionId` = ?", id)
+	if err != nil {
+		return err
+	}
+	_, err = DB.Exec("DELETE FROM `TransactionItem` WHERE `TransactionId` = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (tr *Transaction) Save() error {
 	tr.Init()
 	_, err := DB.Exec("INSERT INTO `Transaction` (`Id`, `Name`, `Desc`, `RefStart`, `RefEnd`) VALUES (?, ?, ?, ?, ?)",
@@ -444,6 +461,12 @@ func transaction_show(line []string) {
 }
 
 func transaction_del(line []string) {
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	id := line[len(line)-1]
+	deleter(id, NewTransaction())
 }
 
 func CompleteTransactionFunc(prefix string) []string {

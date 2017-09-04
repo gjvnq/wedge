@@ -19,6 +19,18 @@ type AssetKind struct {
 	Tags          map[string]bool
 }
 
+func NewAssetKind() *AssetKind {
+	ak := AssetKind{}
+	ak.Init()
+	return &ak
+}
+
+func (ak *AssetKind) Init() {
+	if ak.Tags == nil {
+		ak.Tags = make(map[string]bool)
+	}
+}
+
 func (ak AssetKind) Save() error {
 	if len(ak.Id) <= 0 {
 		return errors.New("All asset kinds must have a non empty id")
@@ -242,22 +254,7 @@ func asset_kind_del(line []string) {
 		return
 	}
 	id := line[len(line)-1]
-	ak := AssetKind{}
-	conf := "DEL-" + id
-	input := ""
-	fmt.Printf("Type '%s' to confirm deletion: ", Bold(Red(conf)))
-	fmt.Scanln(&input)
-	if input != conf {
-		fmt.Println(Bold("Deletion avoided"))
-		return
-	}
-
-	err := ak.Del(id)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	fmt.Println(Bold("Deletion done"))
+	deleter(id, NewAssetKind())
 }
 
 func CompleteAssetKindFunc(prefix string) []string {
