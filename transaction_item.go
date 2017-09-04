@@ -243,6 +243,35 @@ func transaction_item_edit(line []string) {
 }
 
 func transaction_item_show(line []string) {
+	spec := ""
+	if len(line) > 0 {
+		spec = line[0]
+	}
+
+	ti := NewTransactionItem()
+	err := ti.Load(spec)
+	if err == nil {
+		fmt.Printf(ti.MultilineString())
+		return
+	}
+
+	rows, err := DB.Query("SELECT `Id` FROM `TransactionItem` WHERE `Name` LIKE '%%"+spec+"%%' OR ? = '' LIMIT 64", spec)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Read Stuff
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ti.Load(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(ti.ANSIString())
+	}
 }
 
 func transaction_item_del(line []string) {

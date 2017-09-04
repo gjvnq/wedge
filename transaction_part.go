@@ -310,6 +310,35 @@ func transaction_part_edit(line []string) {
 }
 
 func transaction_part_show(line []string) {
+	spec := ""
+	if len(line) > 0 {
+		spec = line[0]
+	}
+
+	tp := NewTransactionPart()
+	err := tp.Load(spec)
+	if err == nil {
+		fmt.Printf(tp.MultilineString())
+		return
+	}
+
+	rows, err := DB.Query("SELECT `Id` FROM `TransactionPart` WHERE `AccountId` = ? OR `Status` = ? OR ? = '' LIMIT 64", spec, spec, spec)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Read Stuff
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = tp.Load(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(tp.ANSIString())
+	}
 }
 
 func transaction_part_del(line []string) {
