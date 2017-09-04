@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strings"
 
 	"github.com/chzyer/readline"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,41 +22,6 @@ var DB *sql.DB
 var GlobalLine *readline.Instance
 var LocalLine *readline.Instance
 var NotImplementedErr = errors.New("Not Implemented")
-
-var PcItemAccount = readline.PcItemDynamic(CompleteAccountFunc)
-var PcItemAssetValue = readline.PcItemDynamic(CompleteAssetValueFunc)
-var PcItemAssetKind = readline.PcItemDynamic(CompleteAssetKindFunc)
-var PcItemTransaction = readline.PcItemDynamic(CompleteTransactionFunc)
-var CompleterAccount = readline.NewPrefixCompleter(PcItemAccount)
-var CompleterAssetValue = readline.NewPrefixCompleter(PcItemAssetValue)
-var CompleterAssetKind = readline.NewPrefixCompleter(PcItemAssetKind)
-var CompleterTransaction = readline.NewPrefixCompleter(PcItemTransaction)
-var Completer = readline.NewPrefixCompleter(
-	readline.PcItem("exit"),
-	readline.PcItem("account",
-		readline.PcItem("show", PcItemAccount),
-		readline.PcItem("add"),
-		readline.PcItem("edit", PcItemAccount),
-		readline.PcItem("del", PcItemAccount)),
-	readline.PcItem("asset",
-		readline.PcItem("value",
-			readline.PcItem("show", PcItemAssetValue),
-			readline.PcItem("add"),
-			readline.PcItem("edit", PcItemAssetValue),
-			readline.PcItem("del", PcItemAssetValue)),
-		readline.PcItem("kind",
-			readline.PcItem("show", PcItemAssetKind),
-			readline.PcItem("add"),
-			readline.PcItem("edit", PcItemAssetKind),
-			readline.PcItem("del", PcItemAssetKind))),
-	readline.PcItem("transaction",
-		readline.PcItem("show", PcItemTransaction),
-		readline.PcItem("add"),
-		readline.PcItem("del", PcItemTransaction),
-		readline.PcItem("edit",
-			readline.PcItem("core", PcItemTransaction),
-			readline.PcItem("parts", PcItemTransaction),
-			readline.PcItem("items", PcItemTransaction))))
 
 func getHistoryFile() string {
 	usr, err := user.Current()
@@ -87,20 +51,6 @@ func set_str(source string, destination *string) {
 	if source != UNSET_STR {
 		*destination = source
 	}
-}
-
-func ask_user(line *readline.Instance, prompt string, what string) (string, error) {
-	line.SetPrompt(prompt)
-	return line.ReadlineWithDefault(what)
-}
-
-func must_ask_user(line *readline.Instance, prompt string, what string) string {
-	line.SetPrompt(prompt)
-	s, err := line.ReadlineWithDefault(what)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.TrimSpace(s)
 }
 
 func main() {

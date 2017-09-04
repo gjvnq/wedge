@@ -115,9 +115,9 @@ func account_show_print_children(level int, parent Account, printed map[string]b
 func account_add(line []string) {
 	acc := Account{}
 	acc.Id = must_ask_user(LocalLine, Sprintf(Bold("Id: ")), "")
-	LocalLine.Config.AutoComplete = CompleterAccount
+	set_completer(LocalLine, CompleterAccount)
 	acc.ParentId = must_ask_user(LocalLine, Sprintf(Bold("ParentId: ")), "")
-	LocalLine.Config.AutoComplete = nil
+	set_completer(LocalLine, nil)
 	acc.Name = must_ask_user(LocalLine, Sprintf(Bold("Name: ")), "")
 	acc.Desc = must_ask_user(LocalLine, Sprintf(Bold("Desc: ")), "")
 	err := acc.Save()

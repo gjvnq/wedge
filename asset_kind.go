@@ -81,6 +81,17 @@ func parse_decimal(input string, decimal_places int) int {
 	return str.ToIntOr(tmp, 0)
 }
 
+func full_decimal_parse(val_str string, asset_kind_id string) (int, error) {
+	// Load AssetKind
+	ak := AssetKind{}
+	err := ak.Load(asset_kind_id)
+	if err != nil {
+		return 0, err
+	}
+	// Parse stuff
+	return parse_decimal(val_str, ak.DecimalPlaces), nil
+}
+
 func fmt_decimal(raw, decimal_places int) string {
 	div := int(math.Pow10(decimal_places))
 	quotient := raw / div

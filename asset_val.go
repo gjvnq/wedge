@@ -10,10 +10,6 @@ import (
 	. "github.com/logrusorgru/aurora"
 )
 
-const DATE_FMT = "2006-01-02-15:04:05-MST"
-const DATE_FMT_SPACES = "2006-01-02 15:04:05 MST"
-const DAY_FMT = "2006-01-02"
-
 type AssetValue struct {
 	Id      string
 	AssetId string
@@ -77,15 +73,11 @@ func (av AssetValue) ValueToStr() string {
 }
 
 func (av AssetValue) StrToValue(val_str string) {
-	// Load Ref AssetKind
-	ak := AssetKind{}
-	err := ak.Load(av.RefId)
+	var err error
+	av.Value, err = full_decimal_parse(val_str, av.RefId)
 	if err != nil {
 		log.Println(err.Error())
-		return
 	}
-	// Parse stuff
-	av.Value = parse_decimal(val_str, ak.DecimalPlaces)
 }
 
 func (av AssetValue) MultilineString() string {
@@ -145,10 +137,10 @@ func asset_value_add(line []string) {
 	var err error
 	av := AssetValue{}
 	// Ask user
-	LocalLine.Config.AutoComplete = CompleterAssetKind
+	set_completer(LocalLine, CompleterAssetKind)
 	av.AssetId = must_ask_user(LocalLine, Sprintf(Bold("AssetId: ")), "")
 	av.RefId = must_ask_user(LocalLine, Sprintf(Bold("RefId: ")), "")
-	LocalLine.Config.AutoComplete = nil
+	set_completer(LocalLine, nil)
 	val_str := must_ask_user(LocalLine, Sprintf(Bold("Value: ")), "")
 	date_str := must_ask_user(LocalLine, Sprintf(Bold("Date: ")), "")
 	// Parse stuff
