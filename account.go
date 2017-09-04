@@ -137,7 +137,7 @@ func account_add(line []string) {
 		Sprintf(Bold("ParentId: ")),
 		"",
 		CompleterAccount,
-		IsAccount)
+		IsAccountOrEmpty)
 	acc.Name = ask_user(
 		LocalLine,
 		Sprintf(Bold("    Name: ")),
@@ -174,7 +174,7 @@ func account_edit(line []string) {
 		Sprintf(Bold("ParentId: ")),
 		acc.ParentId,
 		CompleterAccount,
-		IsAccount)
+		IsAccountOrEmpty)
 	acc.Name = ask_user(
 		LocalLine,
 		Sprintf(Bold("    Name: ")),

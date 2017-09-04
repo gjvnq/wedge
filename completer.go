@@ -112,15 +112,38 @@ func IsDay(s string) bool {
 }
 
 func IsAccount(s string) bool {
-	acc := Account{}
-	err := acc.Load(s)
-	return err == nil || s == ""
+	n := 0
+	err := DB.QueryRow("SELECT COUNT() FROM `Account` WHERE `Id` = ?", s).
+		Scan(&n)
+	return n > 0 && err == nil
+}
+
+func IsAccountOrEmpty(s string) bool {
+	if s == "" {
+		return true
+	}
+	return IsAccount(s)
+}
+
+func IsTransaction(s string) bool {
+	n := 0
+	err := DB.QueryRow("SELECT COUNT() FROM `Transaction` WHERE `Id` = ?", s).
+		Scan(&n)
+	return n > 0 && err == nil
 }
 
 func IsAssetKind(s string) bool {
-	ak := AssetKind{}
-	err := ak.Load(s)
-	return err == nil || s == ""
+	n := 0
+	err := DB.QueryRow("SELECT COUNT() FROM `AssetKind` WHERE `Id` = ?", s).
+		Scan(&n)
+	return n > 0 && err == nil
+}
+
+func IsAssetKindOrEmpty(s string) bool {
+	if s == "" {
+		return true
+	}
+	return IsAssetKind(s)
 }
 
 func ToBool(s string) bool {

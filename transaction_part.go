@@ -184,9 +184,129 @@ func (tp TransactionPart) Del(id string) error {
 }
 
 func transaction_part_add(line []string) {
+	var err error
+	tp := NewTransactionPart()
+	tp.TransactionId = ask_user(
+		LocalLine,
+		Sprintf(Bold("TransactionId: ")),
+		"",
+		CompleterTransaction,
+		IsTransaction)
+	tp.AccountId = ask_user(
+		LocalLine,
+		Sprintf(Bold("    AccountId: ")),
+		"",
+		CompleterAccount,
+		IsAccount)
+	tp.AssetKindId = ask_user(
+		LocalLine,
+		Sprintf(Bold("        Asset: ")),
+		"",
+		CompleterAssetKind,
+		IsAssetKind)
+	val_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("        Value: ")),
+		"",
+		nil,
+		IsFloat)
+	schdul := ask_user(
+		LocalLine,
+		Sprintf(Bold("Scheduled for: ")),
+		"",
+		nil,
+		IsDay)
+	actual := ask_user(
+		LocalLine,
+		Sprintf(Bold("  Actual date: ")),
+		schdul,
+		nil,
+		IsDay)
+	status := ask_user(
+		LocalLine,
+		Sprintf(Bold("       Status: ")),
+		"",
+		CompleterTransactionStatus,
+		func(s string) bool {
+			tp := NewTransactionPart()
+			return tp.SetStatus(s) == nil
+		})
+	tp.SetValue(val_str)
+	tp.SetDates(schdul, actual)
+	tp.SetStatus(status)
+	// Save
+	err = tp.Save()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func transaction_part_edit(line []string) {
+	var err error
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	// Load transaction part
+	tp := NewTransactionPart()
+	err = tp.Load(line[len(line)-1])
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	tp.TransactionId = ask_user(
+		LocalLine,
+		Sprintf(Bold("TransactionId: ")),
+		tp.TransactionId,
+		CompleterTransaction,
+		IsTransaction)
+	tp.AccountId = ask_user(
+		LocalLine,
+		Sprintf(Bold("    AccountId: ")),
+		tp.AccountId,
+		CompleterAccount,
+		IsAccount)
+	tp.AssetKindId = ask_user(
+		LocalLine,
+		Sprintf(Bold("        Asset: ")),
+		tp.AssetKindId,
+		CompleterAssetKind,
+		IsAssetKind)
+	val_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("        Value: ")),
+		tp.ValueToStr(),
+		nil,
+		IsFloat)
+	schdul := ask_user(
+		LocalLine,
+		Sprintf(Bold("Scheduled for: ")),
+		tp.ScheduledFor.Format(DAY_FMT),
+		nil,
+		IsDay)
+	actual := ask_user(
+		LocalLine,
+		Sprintf(Bold("  Actual date: ")),
+		tp.ActualDate.Format(DAY_FMT),
+		nil,
+		IsDay)
+	status := ask_user(
+		LocalLine,
+		Sprintf(Bold("       Status: ")),
+		"",
+		CompleterTransactionStatus,
+		func(s string) bool {
+			tp := NewTransactionPart()
+			return tp.SetStatus(s) == nil
+		})
+	tp.SetValue(val_str)
+	tp.SetDates(schdul, actual)
+	tp.SetStatus(status)
+	// Save
+	err = tp.Update()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func transaction_part_show(line []string) {

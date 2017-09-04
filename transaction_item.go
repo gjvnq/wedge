@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	. "github.com/logrusorgru/aurora"
+	"github.com/mgutz/str"
 	"github.com/satori/go.uuid"
 )
 
@@ -133,9 +134,112 @@ func (ti TransactionItem) Del(id string) error {
 }
 
 func transaction_item_add(line []string) {
+	var err error
+	// Ask transaction part details
+	ti := NewTransactionItem()
+	ti.TransactionId = ask_user(
+		LocalLine,
+		Sprintf(Bold("TransactionId: ")),
+		"",
+		CompleterTransaction,
+		IsTransaction)
+	ti.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("         Name: ")),
+		"",
+		nil,
+		True)
+	ti.AssetKindId = ask_user(
+		LocalLine,
+		Sprintf(Bold("      AssetId: ")),
+		"",
+		CompleterAssetKind,
+		IsAssetKind)
+	tot_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("    TotalCost: ")),
+		"",
+		nil,
+		IsFloat)
+	ti.Quantity = str.ToFloatOr(ask_user(
+		LocalLine,
+		Sprintf(Bold("     Quantity: ")),
+		"",
+		nil,
+		IsFloat), 0)
+	guess := fmt.Sprintf("%f", str.ToFloatOr(tot_str, 0)/ti.Quantity)
+	uni_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("     UnitCost: ")),
+		guess,
+		nil,
+		IsFloat)
+	ti.SetTotalCost(tot_str)
+	ti.SetUnitCost(uni_str)
+	// Save
+	err = ti.Save()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func transaction_item_edit(line []string) {
+	var err error
+	if len(line) == 0 {
+		fmt.Println(Red("No id specified"))
+		return
+	}
+	// Load transaction part
+	ti := NewTransactionItem()
+	err = ti.Load(line[len(line)-1])
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	// Ask transaction part details
+	ti.TransactionId = ask_user(
+		LocalLine,
+		Sprintf(Bold("TransactionId: ")),
+		ti.TransactionId,
+		CompleterTransaction,
+		IsTransaction)
+	ti.Name = ask_user(
+		LocalLine,
+		Sprintf(Bold("         Name: ")),
+		ti.Name,
+		nil,
+		True)
+	ti.AssetKindId = ask_user(
+		LocalLine,
+		Sprintf(Bold("      AssetId: ")),
+		ti.AssetKindId,
+		CompleterAssetKind,
+		IsAssetKind)
+	tot_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("    TotalCost: ")),
+		ti.TotalCostToStr(),
+		nil,
+		IsFloat)
+	ti.Quantity = str.ToFloatOr(ask_user(
+		LocalLine,
+		Sprintf(Bold("     Quantity: ")),
+		fmt.Sprintf("%f", ti.Quantity),
+		nil,
+		IsFloat), 0)
+	uni_str := ask_user(
+		LocalLine,
+		Sprintf(Bold("     UnitCost: ")),
+		ti.UnitCostToStr(),
+		nil,
+		IsFloat)
+	ti.SetTotalCost(tot_str)
+	ti.SetUnitCost(uni_str)
+	// Save
+	err = ti.Update()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func transaction_item_show(line []string) {
