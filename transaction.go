@@ -253,6 +253,66 @@ func transaction_add(line []string) {
 		fmt.Println(err.Error())
 		return
 	}
+
+	// Ask user for transaction items
+	last_currency := ""
+	sum := 0
+	for {
+		flag := ToBool(ask_user(
+			LocalLine,
+			Sprintf(Bold("Add transaction item? [y/n] ")),
+			"",
+			nil,
+			IsBool))
+		if flag != true {
+			break
+		}
+		// Ask transaction item details
+		ti := NewTransactionItem()
+		ti.TransactionId = tr.Id
+		ti.Name = ask_user(
+			LocalLine,
+			Sprintf(Bold("     Name: ")),
+			"",
+			nil,
+			True)
+		ti.AssetKindId = ask_user(
+			LocalLine,
+			Sprintf(Bold("  AssetId: ")),
+			last_currency,
+			CompleterAssetKind,
+			IsAssetKind)
+		// Ensure we do not sum when differnt currencies are invovled
+		if last_currency != "" && last_currency != ti.AssetKindId {
+			sum = -1
+		}
+		last_currency = ti.AssetKindId
+		tot_str := ask_user(
+			LocalLine,
+			Sprintf(Bold("TotalCost: ")),
+			"",
+			nil,
+			IsFloat)
+		ti.Quantity = str.ToFloatOr(ask_user(
+			LocalLine,
+			Sprintf(Bold(" Quantity: ")),
+			"",
+			nil,
+			IsFloat), 0)
+		guess := fmt.Sprintf("%f", str.ToFloatOr(tot_str, 0)/ti.Quantity)
+		uni_str := ask_user(
+			LocalLine,
+			Sprintf(Bold(" UnitCost: ")),
+			guess,
+			nil,
+			IsFloat)
+		ti.SetTotalCost(tot_str)
+		ti.SetUnitCost(uni_str)
+		if sum >= 0 {
+			sum += ti.TotalCost
+		}
+		tr.Items = append(tr.Items, *ti)
+	}
 	// Ask user for transaction parts
 	for {
 		flag := ToBool(ask_user(
@@ -275,14 +335,19 @@ func transaction_add(line []string) {
 			IsAccount)
 		tp.AssetKindId = ask_user(
 			LocalLine,
-			Sprintf(Bold("        Asset: ")),
-			"",
+			Sprintf(Bold("      AssetId: ")),
+			last_currency,
 			CompleterAssetKind,
 			IsAssetKind)
+		last_currency = tp.AssetKindId
+		guess := ""
+		if sum >= 0 {
+			guess, _ = full_decimal_fmt(sum, last_currency)
+		}
 		val_str := ask_user(
 			LocalLine,
 			Sprintf(Bold("        Value: ")),
-			"",
+			guess,
 			nil,
 			IsFloat)
 		schdul := ask_user(
@@ -310,55 +375,6 @@ func transaction_add(line []string) {
 		tp.SetDates(schdul, actual)
 		tp.SetStatus(status)
 		tr.Parts = append(tr.Parts, *tp)
-	}
-	// Ask user for transaction items
-	for {
-		flag := ToBool(ask_user(
-			LocalLine,
-			Sprintf(Bold("Add transaction item? [y/n] ")),
-			"",
-			nil,
-			IsBool))
-		if flag != true {
-			break
-		}
-		// Ask transaction part details
-		ti := NewTransactionItem()
-		ti.TransactionId = tr.Id
-		ti.Name = ask_user(
-			LocalLine,
-			Sprintf(Bold("     Name: ")),
-			"",
-			nil,
-			True)
-		ti.AssetKindId = ask_user(
-			LocalLine,
-			Sprintf(Bold("  AssetId: ")),
-			"",
-			CompleterAssetKind,
-			IsAssetKind)
-		tot_str := ask_user(
-			LocalLine,
-			Sprintf(Bold("TotalCost: ")),
-			"",
-			nil,
-			IsFloat)
-		ti.Quantity = str.ToFloatOr(ask_user(
-			LocalLine,
-			Sprintf(Bold(" Quantity: ")),
-			"",
-			nil,
-			IsFloat), 0)
-		guess := fmt.Sprintf("%f", str.ToFloatOr(tot_str, 0)/ti.Quantity)
-		uni_str := ask_user(
-			LocalLine,
-			Sprintf(Bold(" UnitCost: ")),
-			guess,
-			nil,
-			IsFloat)
-		ti.SetTotalCost(tot_str)
-		ti.SetUnitCost(uni_str)
-		tr.Items = append(tr.Items, *ti)
 	}
 	// Save
 	err = tr.Save()
