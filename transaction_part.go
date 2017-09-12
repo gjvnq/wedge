@@ -166,7 +166,7 @@ func (tp *TransactionPart) Save() error {
 
 func (tp *TransactionPart) Update() error {
 	tp.Init()
-	_, err := DB.Exec("UPDATE `TransactionPart` SET `AccountId` = ?, `Status` = ?, `ScheduledFor` = ?, `ActualDate` = ?, `Value` = ?, `AssetKindId` = ?)WHERE `Id` = ?",
+	_, err := DB.Exec("UPDATE `TransactionPart` SET `AccountId` = ?, `Status` = ?, `ScheduledFor` = ?, `ActualDate` = ?, `Value` = ?, `AssetKindId` = ? WHERE `Id` = ?",
 		tp.AccountId,
 		tp.Status,
 		tp.ScheduledFor.Unix(),
